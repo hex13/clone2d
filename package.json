@@ -1,6 +1,6 @@
 {
   "name": "clone2d",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Data-driven declarative game engine for HTML5",
   "main": "engine.js",
   "scripts": {
@@ -23,5 +23,9 @@
   "bugs": {
     "url": "https://github.com/hex13/clone2d/issues"
   },
-  "homepage": "https://github.com/hex13/clone2d#readme"
+  "homepage": "https://github.com/hex13/clone2d#readme",
+  "dependencies": {
+    "lodash": "^4.15.0",
+    "p2": "^0.7.1"
+  }
 }
