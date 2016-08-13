@@ -5,30 +5,27 @@ Don't install for now.
 
 ```javascript
 
-const createEngine = require('clone2d');
+const engine = require('clone2d')();
 
-const engine = createEngine();
-
-const img = new Image;
-img.src = 'img/cat.png';
-
-engine.createType('cat', {
-    displayAs: 'image',
-    img: img,
-});
-
+engine.createTypesFromImages([
+    '../img/coin.png', '../img/car.png', '../img/component.png', '../img/cat.png',
+]);
 
 engine.world.createObject({
-    type: 'cat',
-    x: 100,
-    y: 100,
-    scale: 1,
-    rotation: Math.PI,
-    ttl: 4000, // time to live
+    type: 'coin',
+    x: 400,
+    y: 500
+});
+
+engine.world.createObject({
+    type: 'coin',
+    x: 400,
+    y: 200,
     keyframes: [
-        {t:1000, scale:1.2, opacity:1, x: 100, y: 200},
-        {t:1000, scale:1.3, opacity: 0.3, x: 150, y: 300}
-    ],
+        {t: 0, opacity: 0, scale: 1},
+        {t: 2000, opacity: 1, scale: 2},
+        {t: 4000, opacity: 0.5, scale: 1.3},
+    ]
 });
 
 
