@@ -1,7 +1,7 @@
 # clone2d
 Data-driven declarative game engine for HTML5
 
-Don't install for now.
+Note: this is a new project. But keep watching. I'm coding this intensively.
 
 ```javascript
 
