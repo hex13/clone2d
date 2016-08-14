@@ -1,6 +1,6 @@
 {
   "name": "clone2d",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Data-driven declarative game engine for HTML5",
   "main": "engine.js",
   "scripts": {
