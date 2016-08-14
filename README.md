@@ -29,5 +29,19 @@ engine.world.createObject({
     ]
 });
 
+engine.world.createObject({
+    type: 'cat',
+    x: 300,
+    y: 300,
+    onMouseOver() {
+        this.opacity = 0.3
+        this.scale = 2;
+    },
+    onMouseOut() {
+        this.opacity = 1;
+        this.scale = 1;
+    }
+});
+
 
 ```
