@@ -6,6 +6,7 @@ const view = require('./view').view;
 const createPhysics = require('./physics');
 const createModel = require('./model');
 
+
 const canvas = document.getElementById('engine');
 
 const ctx = canvas.getContext('2d');
@@ -23,9 +24,26 @@ const createKeyFrames = helpers.createKeyFrames;
 
 function createEngine() {
     const types = Object.create(null);
+    const mouse = {x: 0, y: 0}
 
-    const menu = createModel({types});
-    const world = createPhysics({types});
+    const menu = createModel({types, mouse});
+
+    function onHover(hoveredObjects, newHoveredObjects) {
+        newHoveredObjects.forEach(o => {
+            const idx = hoveredObjects.indexOf(o);
+            const isNew = idx == -1;
+            if (isNew) {
+                o.onMouseOver && o.onMouseOver();
+            } else {
+                hoveredObjects.splice(idx, 1)
+            }
+        });
+        hoveredObjects.forEach(o => {
+            o.onMouseOut && o.onMouseOut();
+        })
+    }
+
+    const world = createPhysics({types, mouse, onHover});
 
 
     const models = [world, menu];
@@ -44,6 +62,19 @@ function createEngine() {
         createView(() => world.objects, world),
         createView(() => menu.objects, menu),
     ];
+
+    canvas.addEventListener('mousemove', e => {
+
+        const x = e.pageX - canvas.offsetLeft;
+        const y = e.pageY - canvas.offsetTop;
+        // const rect = canvas.getBoundingClientRect();
+        // console.log("por", x, y, e.pageX - rect.left, e.pageY - rect.top);
+        e.viewX = x;
+        e.viewY = y;
+        mouse.x = x;
+        mouse.y = y;
+        views.forEach(v => v.mouseMove && v.mouseMove(e));
+    });
 
     canvas.addEventListener('click', e => {
         const x = e.pageX - canvas.offsetLeft;
@@ -143,7 +174,10 @@ function createEngine() {
                     );
                 }
                 if (obj.ttl && age > obj.ttl && obj.state != 'dying') {
-                    obj.die && obj.die({now});
+                    if (obj.die)
+                        obj.die({now});
+                    else
+                        obj.dead = true;
                 }
             }
         });
@@ -185,6 +219,11 @@ function createEngine() {
         return types[name];
     }
 
+    function run(cb) {
+        // TODO run cb when images etc. are ready
+        setTimeout(cb, 500);
+    }
+
     return {
         getType,
         createType,
@@ -193,6 +232,7 @@ function createEngine() {
         createKeyFrames,
         createTypesFromImages,
         views,
+        run
     };
 
 }

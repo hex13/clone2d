@@ -3,8 +3,9 @@ Data-driven declarative game engine for HTML5
 
 Note: this is a new project. But keep watching. I'm coding this intensively.
 
-```javascript
+First you must put `<canvas id="engine"></canvas>` in your HTML. Then:
 
+```javascript
 const engine = require('clone2d')();
 
 engine.createTypesFromImages([

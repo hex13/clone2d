@@ -69,7 +69,7 @@ const World = {
         }
 
         obj.t0 = +new Date - startTime;
-        obj.world = this;
+        obj.model = obj.world = this;//TODO remove obj.world
         obj.state = 'alive';
         obj.dead = false;
 
