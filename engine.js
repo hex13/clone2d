@@ -24,7 +24,18 @@ const createKeyFrames = helpers.createKeyFrames;
 
 function createEngine() {
     const types = Object.create(null);
-    const mouse = {x: 0, y: 0}
+    types.default = {
+
+    };
+    const mouse = {
+        x: 0,
+        y: 0,
+        down: false,
+        start: {
+            x: 0,
+            y: 0
+        }
+    }
 
     const menu = createModel({types, mouse});
 
@@ -44,14 +55,17 @@ function createEngine() {
     }
 
     const world = createPhysics({types, mouse, onHover});
+    const hud = createPhysics({types, mouse});
 
 
-    const models = [world, menu];
+    const models = [world, menu, hud];
 
 
-    function createView(getObjects, model) {
+    function createView(getObjects, model, methods) {
         const inst = Object.create(view);
+        Object.assign(inst, methods);
         inst.getObjects = getObjects;
+
         inst.init({canvas, ctx});
         inst.model = model;
         return inst;
@@ -59,30 +73,107 @@ function createEngine() {
 
 
     const views = [
-        createView(() => world.objects, world),
-        createView(() => menu.objects, menu),
+        createView(() => world.objects, world, {
+            viewport: menu.createObject({
+                displayAs: 'rect',
+                width: 800,
+                height: 600,
+                color: 'rgba(255,0,0,0.4)',
+                x: 400,
+                y: 300,
+                scale: 1,
+                rotation: 0,
+                opacity: 0,
+                aaaakeyframes: [
+                    {t: 4000, x: 600, rotation: Math.PI/2},
+                    {t: 8000, x: 600, rotation: Math.PI},
+                    {t: 12000, x: 700, rotation: Math.PI + Math.PI/2},
+                    {t: 16000, x: 600, rotation: Math.PI * 2},
+                    {t: 17000, x:400, rotation: Math.PI * 2},
+                ]
+            }),
+        }),
+        createView(() => menu.objects, menu, {
+        }),
+        createView(() => hud.objects, hud, {}),
+
+//         createView(() => world.objects, world, {
+//             viewport: menu.createObject({
+//                 displayAs: 'rect',
+//                 width: 15,
+//                 height: 15,
+//                 color: 'blue',
+//                 x: 100,
+//                 y: 100,
+//                 rotation: 0,
+//                 keyframes: [
+//                     {t: 1000, rotation: 1},
+//                     {t: 2000, rotation: 2},
+//                     {t: 3000, rotation: 3},
+//                     {t: 4000, rotation: 3.14},
+//                     {t: 5000, rotation: 4.14},
+//                     {t: 6000, rotation: 6.14},
+//                     {t: 7000, rotation: 6.28},
+//                 ]
+//             }),
+//             render() {
+//                 const el = document.getElementById('html');
+//                 let s = '';
+//                 this.objects.forEach(o => {
+//                     if (!o.img) {
+//                         return;
+//                     }
+//                     s += `<img src="${o.img.src}" style="transform:rotate(${~~o.rotation}rad);position:absolute;left:${~~o.x}px;top:${~~o.y}px"/>
+//                     `
+// //                    s += `<div>${o.type} - ${o.x}, ${o.y}</div>`
+//                 })
+//                 el.innerHTML = s;
+//             }
+//         }),
     ];
 
-    canvas.addEventListener('mousemove', e => {
+    const e2xy = e => ({
+        x: e.pageX - canvas.offsetLeft,
+        y: e.pageY - canvas.offsetTop
+    });
 
-        const x = e.pageX - canvas.offsetLeft;
-        const y = e.pageY - canvas.offsetTop;
-        // const rect = canvas.getBoundingClientRect();
-        // console.log("por", x, y, e.pageX - rect.left, e.pageY - rect.top);
+    canvas.addEventListener('mousemove', e => {
+        const {x,y} = e2xy(e);
         e.viewX = x;
         e.viewY = y;
         mouse.x = x;
         mouse.y = y;
         views.forEach(v => v.mouseMove && v.mouseMove(e));
+        document.title = x + ', ' + mouse.down + '  ' + (mouse.x - mouse.start.x) + ': ' + (mouse.y - mouse.start.y) ;
     });
 
     canvas.addEventListener('click', e => {
-        const x = e.pageX - canvas.offsetLeft;
-        const y = e.pageY - canvas.offsetTop;
+        const {x,y} = e2xy(e);
         e.viewX = x;
         e.viewY = y;
         views.forEach(v => v.click && v.click(e));
     });
+
+    canvas.addEventListener('mousedown', e => {
+        mouse.start = e2xy(e);
+        mouse.down = true;
+        views.forEach(v => v.mouseDown && v.mouseDown(e));
+    });
+
+    canvas.addEventListener('mouseup', e => {
+        //const {x,y} = e2xy(e);
+        mouse.down = false;
+        views.forEach(v => v.mouseUp && v.mouseUp(e));
+    });
+    // TODO views --
+
+    // rectangles/handles for scaling
+
+    // model for viewports
+    // and in view: reference to viewport (which can be animated etc.)
+
+    // autochanging coordinates, paths etc.
+
 
 
     function loop() {
@@ -232,7 +323,9 @@ function createEngine() {
         createKeyFrames,
         createTypesFromImages,
         views,
-        run
+        run,
+        mouse,
+        hud
     };
 
 }

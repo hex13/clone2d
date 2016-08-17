@@ -6,19 +6,48 @@ module.exports = function createPhysics(params) {
     let hoveredObjects = [];
     const onHover = params.onHover;
     const world = new p2.World({
-        gravity:[0, 0]
+        gravity:[0, 1]
     });
 
     const model =  createModel(params);
 
+    world.on("postStep", () =>{
+        model.objects.forEach(o => {
+            const body = o._p2body;
+            if (o._updates) {
+                o._updates.forEach(u => {
+                    for (let p in u) {
+                        o[p] = u[p];
+                    }
+                    if ('x' in u) {
+                        body.position[0] = u.x;
+                    }
+                    if ('y' in u) {
+                        body.position[1] = u.y;
+                    }
+                    if ('rotation' in u) {
+                        body.angle = u.rotation;
+                    }
+                    body.aabbNeedsUpdate = true;
+                    body.updateAABB();
+                    body.updateMassProperties();
+                })
+                o.clean();
+            }
+        });
+    });
+
     model.beforeUpdate = function () {
+
         world.step(1/60, 1/60, 10);
+
         this.objects.forEach(o => {
             const body = o._p2body;
             o.x = body.position[0];
             o.y = body.position[1];
             o.rotation = body.angle;
-        })
+        });
+
 
         const newHoveredObjects = this.hitTest(mouse);
 
@@ -50,13 +79,17 @@ module.exports = function createPhysics(params) {
             position: [obj.x, obj.y],
             mass: 1,
             angle: obj.rotation || 0,
-            //angularVelocity: 2,
+            angularVelocity: obj.vr || 0,
         });
+
+        if (obj.kinematic) {
+            body.type = p2.Body.KINEMATIC
+        }
 
         let shape;
         const displayAs = obj.displayAs || 'box';
         console.log(obj.type, obj.width, obj.height)
-        if (displayAs === 'box') {
+        if (displayAs === 'box' || displayAs === 'rect') {
             shape = new p2.Box({
                 width: obj.width,
                 height: obj.height

@@ -4,7 +4,7 @@ const helpers = require('./helpers');
 const createKeyFrames = helpers.createKeyFrames;
 
 function resolvePrototype(obj) {
-    const type = obj.type || obj.as;
+    const type = obj.type || obj.as || 'default';
     const proto = types[type];
     if (!proto) {
         console.error("couldn't find type: '" + type + "'");
@@ -72,6 +72,12 @@ const World = {
         obj.model = obj.world = this;//TODO remove obj.world
         obj.state = 'alive';
         obj.dead = false;
+        obj.set = function (updates) {
+            (this._updates || (this._updates = [])).push(updates);
+        };
+        obj.clean = function () {
+            this._updates && (this._updates.length = 0);
+        };
 
 
         this.objects.push(obj);
