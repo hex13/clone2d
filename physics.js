@@ -12,6 +12,11 @@ module.exports = function createPhysics(params) {
     const model =  createModel(params);
 
     world.on("postStep", () =>{
+        //if (this === engine.world && window.paused) return;
+    });
+
+    model.beforeUpdate = function () {
+
         model.objects.forEach(o => {
             const body = o._p2body;
             if (o._updates) {
@@ -46,16 +51,17 @@ module.exports = function createPhysics(params) {
                 o.clean();
             }
         });
-    });
 
-    model.beforeUpdate = function () {
 
-        world.step(1/60, 1/60, 10);
+        if (this !== engine.world || !window.paused)
+            world.step(1/60, 1/60, 10);
 
+        if (this !== engine.world || !window.paused)
         this.objects.forEach(o => {
             const body = o._p2body;
             o.x = body.position[0];
             o.y = body.position[1];
+            [o.vx, o.vy] = body.velocity;
             o.rotation = body.angle;
         });
 
@@ -64,6 +70,7 @@ module.exports = function createPhysics(params) {
 
         onHover && onHover(hoveredObjects, newHoveredObjects);
         hoveredObjects = newHoveredObjects;
+
 
     };
 
@@ -86,12 +93,15 @@ module.exports = function createPhysics(params) {
     }
 
     model.afterCreateObject = function (obj) {
-        const body = new p2.Body({
+        let body = new p2.Body({
             position: [obj.x, obj.y],
-            mass: 1,
+            mass: 'mass' in obj? obj.mass : 1,
             angle: obj.rotation || 0,
             angularVelocity: obj.vr || 0,
+            velocity: [obj.vx || 0, obj.vy || 0]
         });
+
+
 
         if (obj.kinematic) {
             body.type = p2.Body.KINEMATIC
@@ -99,16 +109,77 @@ module.exports = function createPhysics(params) {
 
         let shape;
         const displayAs = obj.displayAs || 'box';
-        console.log(obj.type, obj.width, obj.height)
-        if (displayAs === 'box' || displayAs === 'rect') {
-            shape = new p2.Box({
-                width: obj.width,
-                height: obj.height
-            });
 
+        if (obj.shape === 'rope') {
+            // TODO we can't do this way... engine must recognize bodies as bodies (not as invisible parts)
+            // because of need of reassigning updates from p2...
+
+            // maybe we need separate game objects (renderable, eventable etc.)
+            // from bodies... (physicable but also reassignable)
+            // but simpler solution would be just create object for each link in chain
+            // and return some sort of parent object....
+            // later we can do this lite-style
+            // lean object without all shit (set, logic, etc.),
+            const chain = [];
+            let lastLink;
+            for (let i = 1; i < obj.points.length; i++) {
+                const curr = obj.points[i];
+                const prev = obj.points[i - 1];
+
+                let x = prev.x;
+                let y = prev.y;
+                let distX = curr.x - prev.x;
+                let distY = curr.y - prev.y;
+                const dist = Math.sqrt(distX * distX + distY * distY);
+                const width = 16;
+                const stepCount = dist / width;
+                const dx = distX / stepCount;
+                const dy = distY / stepCount;
+
+                for (let j = 0; j < stepCount; x+= dx, y+= dy, j++) {
+                    const link = this.createObject({
+                        displayAs: 'circle',
+                        r: width/2,
+                        width: width,
+                        height: width,
+                        mass: 0.1, //0.09,
+                        color:  'rgba(170,110,80,0.1)',//'rgba(100,100,100, 0.1)',
+                        fill: 'rgba(170,110,80,0.3)',
+                        x: obj.x + x,
+                        y: obj.y + y,
+                    });
+
+                    if (lastLink) {
+                        const linkConstraint = new p2.LockConstraint(link._p2body, lastLink._p2body, {
+                           collideConnected: false,
+                        })
+                        //linkConstraint.setStiffness(400);
+                        world.addConstraint(linkConstraint);
+                    }
+                    lastLink = link;
+                    chain.push(link);
+                }
+
+            }
+            if (obj.jointA) {
+                 world.addConstraint(new p2.DistanceConstraint(chain[0]._p2body, obj.jointA._p2body,{
+                     distance:1,
+                 }));
+            }
+            obj._p2body = chain[0]._p2body; // engine relies on this variable
+            //obj.dead = true; // remove object, keep only objects that form a chain/rope
+            obj.points = chain;
+            //obj.shape = null; // temporary
+            return;
+        }
+        else if (displayAs === 'box' || displayAs === 'rect' ||  displayAs === 'text') {
+            shape = new p2.Box({
+                width: 'width' in obj? obj.width : 100,
+                height: 'height' in obj? obj.height : 100
+            });
         } else {
             shape = new p2.Circle({
-                radius: 1
+                radius: obj.r || 1
             });
         }
         body.addShape(shape);
@@ -117,6 +188,25 @@ module.exports = function createPhysics(params) {
         body._obj = obj;
 
         world.addBody(body);
+        if (obj.constraints) {
+            let constraint;
+            if (obj.constraints.distance) {
+                constraint = new p2.DistanceConstraint(obj._p2body, obj.constraints.distance._p2body, {
+                    localAnchorA: [0, -obj.height/3.1],
+                });
+            } else if (obj.constraints.lock) {
+                constraint = new p2.LockConstraint(obj._p2body, obj.constraints.lock._p2body);
+            }
+            if (constraint) {
+                world.addConstraint(constraint);
+
+                 obj.removeConstraints = () => {
+                     world.removeConstraint(constraint);
+                 }
+
+            }
+        }
+
     };
     return model;
 };
