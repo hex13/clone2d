@@ -68,6 +68,10 @@ const World = {
             obj.height = obj.img.height;
         }
 
+        obj.kinematic = !!obj.kinematic;
+        obj.mass = 'mass' in obj? obj.mass : 1;
+        obj.vr = obj.vr || 0;
+
         obj.t0 = +new Date - startTime;
         obj.model = obj.world = this;//TODO remove obj.world
         obj.state = 'alive';
