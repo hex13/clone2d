@@ -6,20 +6,65 @@ function resolveRenderables(obj) {
         width: 20,
         height: 20,
     };
-    return obj.resolveRenderables? obj.resolveRenderables() : [
-        obj,
-        {
-            displayAs: 'rect',
-            color: 'rgba(100,200,100,0.6)',
-            fill: 'rgb(0,0,0,0)',
-            x: obj.x ,
-            y: obj.y,
-            opacity: obj.opacity,
+    if (obj.resolveRenderables)
+        return obj.resolveRenderables();
+
+    if (obj.shape == 'rope') {
+        return {
+            displayAs: 'path',
+            color: obj.color,
+            fill: obj.fill,
             width: obj.width,
-            height: obj.height,
-            center: obj,
-            rotation: obj.rotation,
-        },
+            x: 0,
+            y: 0,//this.y,
+            points: obj.points,
+        }
+    }
+    // if (obj.displayAs == 'rope') {
+    //     const res = [];
+    //     for (let i = 1; i < obj.points.length; i++) {
+    //         const curr = obj.points[i];
+    //         const prev = obj.points[i -1];
+    //         const dx = curr.x - prev.x;
+    //         const dy = curr.y - prev.y;
+    //         //for (let x = prev.x, y = prev.y; x < curr.x || y < curr.y; ) {
+    //         for (let j = 0; j < 10; j++) {
+    //             res.push({
+    //                 displayAs: 'rect',
+    //                 width: 4,
+    //                 height: 4,
+    //                 color: 'rgba(100,200,100,0.7)',
+    //                 // rotation: obj.rotation,
+    //                 // center: obj,
+    //                 x: obj.x + prev.x + j * dx / 10,
+    //                 y: obj.y + prev.y + j * dy / 10
+    //             });
+    //         }
+    //     }
+    //     return res;
+    //     return obj.points.map(p => ({
+    //         displayAs: 'rect',
+    //         width: 5,
+    //         height: 5,
+    //         color: 'red',
+    //         x: obj.x + p.x,
+    //         y: obj.y + p.y
+    //     }))
+    // }
+    return [
+        obj,
+        // {
+        //     displayAs: 'rect',
+        //     color: 'rgba(100,200,100,0.6)',
+        //     fill: 'rgb(0,0,0,0)',
+        //     x: obj.x ,
+        //     y: obj.y,
+        //     opacity: obj.opacity,
+        //     width: obj.width,
+        //     height: obj.height,
+        //     center: obj,
+        //     rotation: obj.rotation,
+        // },
         //
         // {
         //     displayAs: 'rect',
@@ -71,6 +116,9 @@ function resolveText(obj) {
 
 
 exports.view = {
+    emit(name) {
+
+    },
     getObjects() {
         return [];
     },
@@ -99,9 +147,15 @@ exports.view = {
         for (let i = 0; i < len; i++) {
             var unresolvedObj = objects[i];
             const isHovered = this.model.isHovered? this.model.isHovered(unresolvedObj) : false;
-            const renderables = resolveRenderables(unresolvedObj);
-            if (!renderables || !renderables.length) {
+            let renderables = resolveRenderables(unresolvedObj);
+            if (!renderables) {
                 continue;
+            }
+            if (!(renderables instanceof Array)) {
+                renderables = [renderables];
+            }
+            if(!renderables.length) {
+                return;
             }
             renderables.forEach(obj => {
                 ctx.save();
@@ -130,7 +184,7 @@ exports.view = {
                 ctx.rotate(rotation);
                 ctx.translate(-center.x, -center.y);
                 ctx.translate(obj.x, obj.y);
-                
+
                 // ctx.translate(-center.x, -center.y);
                 // ctx.translate(center.x, center.y);
                 if ('fill' in obj) {
@@ -172,13 +226,11 @@ exports.view = {
                         ctx.lineCap = 'round';
                         if ('color' in obj) ctx.strokeStyle = obj.color;
                         if ('width' in obj) ctx.lineWidth = obj.width;
-
                         ctx.beginPath();
                         const points = obj.points;
                         ctx.moveTo( points[0].x,  points[0].y);
 
                         for (let i = 1; i < points.length; i++) {
-                            console.log('PATH', x,y, points[i].x, points[i].y)
                             ctx.lineTo(points[i].x, points[i].y);
                         }
 
