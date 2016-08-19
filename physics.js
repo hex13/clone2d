@@ -28,6 +28,17 @@ module.exports = function createPhysics(params) {
                     if ('rotation' in u) {
                         body.angle = u.rotation;
                     }
+                    if ('vx' in u || 'vy' in u) {
+                        body.velocity = [u.vx || 0, u.vy || 0];
+                    }
+                    if ('vr' in u) {
+                        body.angularVelocity = u.vr;
+                    }
+                    if ('kinematic' in u) {
+                        body.type = u.kinematic? p2.Body.KINEMATIC : p2.Body.DYNAMIC;
+                        body.mass = o.mass;
+                    }
+                    // TODO is these lines needed?
                     body.aabbNeedsUpdate = true;
                     body.updateAABB();
                     body.updateMassProperties();
