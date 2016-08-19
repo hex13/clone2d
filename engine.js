@@ -226,6 +226,7 @@ function createEngine() {
         }
 
         objects.forEach((obj, i) => {
+            obj.onUpdate && obj.onUpdate();
             const age = world.age - obj.t0;
 
             const now = age;
