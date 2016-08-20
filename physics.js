@@ -6,7 +6,7 @@ module.exports = function createPhysics(params) {
     let hoveredObjects = [];
     const onHover = params.onHover;
     const world = new p2.World({
-        gravity:[0, 1]
+        gravity:[0, 300]
     });
 
     const model =  createModel(params);
@@ -43,10 +43,20 @@ module.exports = function createPhysics(params) {
                         body.type = u.kinematic? p2.Body.KINEMATIC : p2.Body.DYNAMIC;
                         body.mass = o.mass;
                     }
+                    if ('width' in u || 'height' in u) {
+                        body.removeShape(body.shapes[0]);
+                        const newShape = new p2.Box({
+                            height: 'height' in u? u.height: o.height,
+                            width: 'width' in u? u.width: o.width,
+                        })
+                        body.addShape(newShape);
+                    }
+
                     // TODO is these lines needed?
-                    body.aabbNeedsUpdate = true;
+
                     body.updateAABB();
                     body.updateMassProperties();
+                    body.aabbNeedsUpdate = true;
                 })
                 o.clean();
             }
@@ -98,7 +108,8 @@ module.exports = function createPhysics(params) {
             mass: 'mass' in obj? obj.mass : 1,
             angle: obj.rotation || 0,
             angularVelocity: obj.vr || 0,
-            velocity: [obj.vx || 0, obj.vy || 0]
+            velocity: [obj.vx || 0, obj.vy || 0],
+            angularDamping: 0.8,
         });
 
 
@@ -163,6 +174,11 @@ module.exports = function createPhysics(params) {
             }
             if (obj.jointA) {
                  world.addConstraint(new p2.DistanceConstraint(chain[0]._p2body, obj.jointA._p2body,{
+                     distance:1,
+                 }));
+            }
+            if (obj.jointB) {
+                 world.addConstraint(new p2.DistanceConstraint(chain[chain.length - 1]._p2body, obj.jointB._p2body,{
                      distance:1,
                  }));
             }
