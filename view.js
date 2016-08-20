@@ -114,10 +114,22 @@ function resolveText(obj) {
     return obj.getText? obj.getText() : obj.text;
 }
 
-
+const DEFAULT_VIEWPORT = {
+    x: 400, y: 300, width: 800, height: 600, scale: 1
+};
 exports.view = {
-    emit(name) {
+    emit(name, event) {
+        const viewport = this.viewport || DEFAULT_VIEWPORT;
 
+        const viewEvent = Object.create(event);
+
+        viewEvent.x = (event.x - (viewport.x - viewport.width/2)) / viewport.scale;
+        viewEvent.y = (event.y - (viewport.y - viewport.height/2)) / viewport.scale;
+
+        if (this[name]) {
+
+            this[name](viewEvent);
+        }
     },
     getObjects() {
         return [];
@@ -126,11 +138,12 @@ exports.view = {
         return this.getObjects();
     },
     init({canvas, ctx, viewport}) {
-        //this.viewport = viewport;
-        console.log("VV", this.viewport)
+        this.viewport = this.viewport || DEFAULT_VIEWPORT;
+        //console.log("VV", this.viewport);
+
     },
     render(ctx) {
-        const viewport = this.viewport || {x: 500, y: 500, rotation: 0, width: 1000, height: 1000};
+        const viewport = this.viewport || {x: 400, y: 300, rotation: 0, width: 800, height: 600, scale: 1};
         //const viewport = this.viewport || {x: 0, y: 0, rotation: 0};
         ctx.save();
         //ctx.translate(viewport.x + viewport.width / 2, viewport.y + viewport.height / 2)
@@ -140,12 +153,16 @@ exports.view = {
 
         ctx.translate(viewport.x - viewport.width/2, viewport.y - viewport.height/2);
 
+
+        ctx.scale(viewport.scale, viewport.scale);
+
         const objects = this.objects;
 
         const len = objects.length;
 
         for (let i = 0; i < len; i++) {
             var unresolvedObj = objects[i];
+            unresolvedObj._ctx = ctx;
             const isHovered = this.model.isHovered? this.model.isHovered(unresolvedObj) : false;
             let renderables = resolveRenderables(unresolvedObj);
             if (!renderables) {
@@ -196,7 +213,20 @@ exports.view = {
                     obj.render(ctx);
                 } else {
                     if (displayAs === 'text') {
-                        ctx.fillText(resolveText(obj), 0, 0);
+                        const text = resolveText(obj);
+                        ctx.save();
+                        ctx.textBaseline = 'top'
+                        if (obj.fontSize)
+                            ctx.font = obj.fontSize + 'px sans-serif';
+
+
+                        ctx.fillText(text, -obj.width/2, -obj.height/2);
+
+                        const padding = 4;
+                        ctx.fillStyle = 'rgba(10,80,120,0.4)';
+                        ctx.globalCompositeOperation = 'hue';
+                        ctx.fillRect(-obj.width/2-padding, -obj.height/2-padding, obj.width + 2 * padding, obj.height + 2 * padding);
+                        ctx.restore();
 
                     } else if (displayAs === 'image') {
                         const scale = obj.scale || 1;
@@ -208,7 +238,11 @@ exports.view = {
                             ctx.fillRect(-obj.width/2, -obj.height/2, obj.width, obj.height);
                             ctx.restore();
                         }
-                        ctx.drawImage(obj.img, -w/2, -h/2, w, h);
+                        if ('sx' in obj || 'sy' in obj) {
+                            ctx.drawImage(obj.img, obj.sx || 0, obj.sy || 0, obj.width, obj.height, -w/2, -h/2, w, h);
+                        } else {
+                            ctx.drawImage(obj.img, -w/2, -h/2, w, h);
+                        }
                     } else if (displayAs === 'circle') {
                         ctx.beginPath();
                         ctx.arc(0, 0, obj.r, 0, Math.PI * 2, false);
@@ -216,7 +250,7 @@ exports.view = {
                         ctx.fill();
                     } else if (displayAs === 'rect') {
                         //ctx.fillRect(~~obj.x, ~~obj.y, obj.width, obj.height);
-                        ctx.setLineDash([10, 10]);
+                        //ctx.setLineDash([10, 10]);
 
                         ctx.lineWidth = 2;
 

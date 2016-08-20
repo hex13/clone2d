@@ -55,10 +55,12 @@ function createEngine() {
     }
 
     const world = createPhysics({types, mouse, onHover});
+
+    const overlay = createPhysics({types, mouse});
     const hud = createPhysics({types, mouse});
 
 
-    const models = [world, menu, hud];
+    const models = [world, menu, hud, overlay];//!!!TODO automatic adding
 
 
     function createView(getObjects, model, methods) {
@@ -70,32 +72,40 @@ function createEngine() {
         inst.model = model;
         return inst;
     }
+    const worldViewport = menu.createObject({
+        displayAs: 'rect',
+        width: 800,
+        height: 600,
+        color: 'rgba(255,0,0,0.4)',
+        x: 400,
+        y: 300 + 100,
+        scale: 1,
+        rotation: 0,
+        opacity: 0,
+        aaaakeyframes: [
+            {t: 4000, x: 600, rotation: Math.PI/2},
+            {t: 8000, x: 600, rotation: Math.PI},
+            {t: 12000, x: 700, rotation: Math.PI + Math.PI/2},
+            {t: 16000, x: 600, rotation: Math.PI * 2},
+            {t: 17000, x:400, rotation: Math.PI * 2},
+        ]
+    });
+    let a = 0;
+    //setInterval(() => {worldViewport.scale = 0.04*Math.cos(a+=0.1)+1}, 200);
 
 
     const views = [
         createView(() => world.objects, world, {
-            viewport: menu.createObject({
-                displayAs: 'rect',
-                width: 800,
-                height: 600,
-                color: 'rgba(255,0,0,0.4)',
-                x: 400,
-                y: 300,
-                scale: 1,
-                rotation: 0,
-                opacity: 0,
-                aaaakeyframes: [
-                    {t: 4000, x: 600, rotation: Math.PI/2},
-                    {t: 8000, x: 600, rotation: Math.PI},
-                    {t: 12000, x: 700, rotation: Math.PI + Math.PI/2},
-                    {t: 16000, x: 600, rotation: Math.PI * 2},
-                    {t: 17000, x:400, rotation: Math.PI * 2},
-                ]
-            }),
+            viewport: worldViewport,
         }),
         createView(() => menu.objects, menu, {
         }),
-        createView(() => hud.objects, hud, {}),
+        createView(() => hud.objects, hud, {
+            //viewport: worldViewport
+        }),
+        createView(() => overlay.objects, overlay, {
+            viewport: worldViewport
+        }),
 
 //         createView(() => world.objects, world, {
 //             viewport: menu.createObject({
@@ -139,25 +149,44 @@ function createEngine() {
 
     canvas.addEventListener('mousemove', e => {
         const {x,y} = e2xy(e);
-        e.viewX = x;
+        e.viewX = x;//TODO remove
         e.viewY = y;
         mouse.x = x;
         mouse.y = y;
-        views.forEach(v => v.mouseMove && v.mouseMove(e));
-        document.title = x + ', ' + mouse.down + '  ' + (mouse.x - mouse.start.x) + ': ' + (mouse.y - mouse.start.y) ;
+
+
+        const engineEvent = {
+            x,
+            y,
+            originalEvent: e
+        };
+        views.forEach(v => v.emit('onMouseMove', engineEvent));
+
+
     });
 
     canvas.addEventListener('click', e => {
         const {x,y} = e2xy(e);
+
+        //TODO remove these variables
         e.viewX = x;
         e.viewY = y;
+
         views.forEach(v => v.click && v.click(e));
     });
 
     canvas.addEventListener('mousedown', e => {
         mouse.start = e2xy(e);
         mouse.down = true;
-        views.forEach(v => v.mouseDown && v.mouseDown(e));
+
+        const {x, y} = e2xy(e);
+        const engineEvent = {
+            x,
+            y,
+            originalEvent: e
+        };
+        views.forEach(v => v.emit('onMouseDown', engineEvent));
+        //views.forEach(v => v.mouseDown && v.mouseDown(e));
     });
 
     canvas.addEventListener('mouseup', e => {
@@ -180,7 +209,8 @@ function createEngine() {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         views.forEach(v => v.render(ctx))
-        ctx.fillText(lastFps, 10, 100);
+        ctx.fillStyle = 'green'
+        ctx.fillText('fps:' + lastFps, 10, 100);
 
         const now = new Date;
         fps++;
@@ -275,8 +305,10 @@ function createEngine() {
         });
         objects.forEach(o => {
             if (o.dead) {
+                o.model.removeObject && o.model.removeObject(o);
                 if (o.afterDeath)
                     o.afterDeath();
+
             }
         });
         world.objects = objects.filter(o => !o.dead);
@@ -292,6 +324,19 @@ function createEngine() {
     }
     createType('text', {
         displayAs: 'text',
+        onUpdate() {
+            if (this._ctx) {
+                this._ctx.save();
+                if (this.fontSize) {
+                    this._ctx.font = this.fontSize + 'px sans-serif';
+                    this.height = this.fontSize;
+                }
+                this.set({
+                    width: this._ctx.measureText(this.getText()).width,
+                });
+                this._ctx.restore();
+            }
+        }
     })
 
     function createTypesFromImages(images) {
@@ -326,7 +371,10 @@ function createEngine() {
         views,
         run,
         mouse,
-        hud
+        hud,
+        overlay,
+        worldView: views[0],
+        hudView: views[2],
     };
 
 }
