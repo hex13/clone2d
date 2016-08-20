@@ -1,12 +1,14 @@
 const p2 = require('p2');
 const createModel = require('./model');
 
+const modifiers = require('./modifiers');
+
 module.exports = function createPhysics(params) {
     const mouse = params.mouse;
     let hoveredObjects = [];
     const onHover = params.onHover;
     const world = new p2.World({
-        gravity:[0, 300]
+        gravity:[0, 400]
     });
 
     const model =  createModel(params);
@@ -102,6 +104,11 @@ module.exports = function createPhysics(params) {
         // })
     }
 
+    model.removeObject = function (obj) {
+        if (obj._p2body)
+            world.removeBody(obj._p2body);
+    }
+
     model.afterCreateObject = function (obj) {
         let body = new p2.Body({
             position: [obj.x, obj.y],
@@ -158,6 +165,7 @@ module.exports = function createPhysics(params) {
                         fill: 'rgba(170,110,80,0.3)',
                         x: obj.x + x,
                         y: obj.y + y,
+                        constraints: {}
                     });
 
                     if (lastLink) {
@@ -187,6 +195,10 @@ module.exports = function createPhysics(params) {
             obj.points = chain;
             //obj.shape = null; // temporary
             return;
+        }
+        else if (obj.fragmented) {
+            modifiers.modExplode.patch(obj, this);
+            return
         }
         else if (displayAs === 'box' || displayAs === 'rect' ||  displayAs === 'text') {
             shape = new p2.Box({
