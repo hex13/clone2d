@@ -204,14 +204,15 @@ function createEngine() {
 
     // autochanging coordinates, paths etc.
 
-
-
-    function loop() {
-
+    function renderLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         views.forEach(v => v.render(ctx))
         ctx.fillStyle = 'green'
         ctx.fillText('fps:' + lastFps, 10, 100);
+        requestAnimationFrame(renderLoop);
+    }
+
+    function modelLoop() {
 
         const now = new Date;
         fps++;
@@ -232,11 +233,14 @@ function createEngine() {
         });
         lastSystemTime = systemTime;
 
-        requestAnimationFrame(loop);
+
     }
 
-    requestAnimationFrame(loop);
+    requestAnimationFrame(renderLoop);
 
+    setInterval(() => {
+        modelLoop();
+    }, 16);
 
 
     let lastSystemTime;
