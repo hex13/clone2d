@@ -21,8 +21,8 @@ exports.modExplode = {
         if (obj.displayAs && allowed.indexOf(obj.displayAs)==-1) return;
 
         let y = 0;
-        const piecesX = options.piecesX || 2;
-        const piecesY = options.piecesY || 2;
+        const piecesX = options.piecesX || obj.piecesX || 2;
+        const piecesY = options.piecesY || obj.piecesY || 2;
         const width = obj.width;
         let last;
         for (let y = 0; y < piecesY; y++) {
