@@ -6,20 +6,23 @@ exports.modOpacity = {
     }
 };
 
+const EMPTY = {};
 exports.modExplode = {
-    patch(obj, ttl = 3000) {
-        if (ttl < 1000) return;
+    patch(obj, ttl = 2000, options) {
+        options = options || EMPTY;
+       if (obj.exploded) return;
+       if (ttl < 400) return;
         const allowed = ['box', 'image', 'rect', 'circle'];
         if (obj.joinA || obj.joinB) return;
         if (obj.constraints) return;
-        if (obj.shape == 'rope') return;
-        console.log(obj.type, obj.shape, obj.displayAs, obj)
+        if (obj.shape == 'rope' || obj.type == 'rope') return;
+
         //console.log('ooo', obj.displayAs, obj.type, obj.shape)
         if (obj.displayAs && allowed.indexOf(obj.displayAs)==-1) return;
 
         let y = 0;
-        const piecesX = 4;
-        const piecesY = 4;
+        const piecesX = options.piecesX || 2;
+        const piecesY = options.piecesY || 2;
         const width = obj.width;
         let last;
         for (let y = 0; y < piecesY; y++) {
@@ -41,16 +44,31 @@ exports.modExplode = {
                     y: obj.y + sy,
                     sx: sx,
                     sy: sy,
+                    fill: obj.fill,
+                    color: obj.color,
                     skinematic: true,
                     points: obj.points,
-                    ttl: ttl + Math.random() * ttl
+                    ttl: ttl,
+                    opacity: Math.max(0, ttl/100),
+                    ignore: true,
+                    isDestroyer: obj.isDestroyer,
+                    keyframes: [
+                        {t: 0, opacity: 1},
+                        {t: 3000, opacity: 0}
+                    ]
                 });
+                if (obj.isDestroyer) {
+
+                }
                 last = curr;
 
                 curr.set({
                     vx: Math.cos(angle) * (100 * Math.random() + 200),
                     vy:  Math.sin(angle) * (100 * Math.random() + 200) - 100,
                 });
+                // setTimeout(() => {
+                //     exports.modExplode.patch(curr, ttl - 200)
+                // }, 300)
             }
 
         }
@@ -59,6 +77,7 @@ exports.modExplode = {
         //obj._p2body = last._p2body; // engine relies on this variable
         //obj.displayAs = 'rect';
         //obj.set({kinematic:true})
+        obj.exploded = true;
         obj.dead = true;
         //obj.state = 'dying'
     }

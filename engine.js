@@ -5,6 +5,7 @@ const _ = require('lodash');
 const view = require('./view').view;
 const createPhysics = require('./physics');
 const createModel = require('./model');
+const modifiers = require('./modifiers')
 
 
 const canvas = document.getElementById('engine');
@@ -375,6 +376,7 @@ function createEngine() {
         overlay,
         worldView: views[0],
         hudView: views[2],
+        modifiers: modifiers,
     };
 
 }
