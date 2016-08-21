@@ -218,7 +218,7 @@ function createEngine(params) {
         const now = new Date;
         fps++;
         if (now - last > (1000/4)) {
-            lastFps = fps * 4;
+            lastFps = ~~(fps * 1000 / (now - last));
             fps = 0;
             last = now;
 
