@@ -8,7 +8,7 @@ module.exports = function createPhysics(params) {
     let hoveredObjects = [];
     const onHover = params.onHover;
     const world = new p2.World({
-        gravity:[0, 400]
+        gravity:[0, 300]
     });
 
     const model =  createModel(params);
@@ -117,6 +117,7 @@ module.exports = function createPhysics(params) {
             angularVelocity: obj.vr || 0,
             velocity: [obj.vx || 0, obj.vy || 0],
             angularDamping: 0.8,
+            allowSleep: false,collisionResponse:true
         });
 
 
@@ -236,5 +237,40 @@ module.exports = function createPhysics(params) {
         }
 
     };
+    function contact(data) {
+       const tmpA = data.bodyA._obj;
+       const tmpB = data.bodyA._obj;
+       let a;
+       let b;
+       if (tmpA.type == 'coin') {
+           a = tmpA;
+           b = tmpB;
+       } else if (tmpB.type == 'coin') {
+           a = tmpB;
+           b = tmpA;
+       }
+       if (a/* && !a.constraints*/) {
+           a.dead = true;
+       }
+    }
+    world.on('postBroadphase', function (d) {
+        const objects = d.pairs.map(p => p._obj);
+        for (let i = 0; i < d.pairs.length/2; i++) {
+            const a = d.pairs[i * 2]._obj;
+            const b = d.pairs[i * 2 + 1]._obj;
+            if (a.isDestroyer && !b.ignore && !b.constraints && !b.isImmortal) {
+                modifiers.modExplode.patch(b) //o.d
+
+            }
+            if (b.isDestroyer && !a.ignore && !a.constraints && !a.isImmortal) {
+                modifiers.modExplode.patch(a) //o.d
+
+            }
+
+        }
+//        console.log(t);
+    });
+
+
     return model;
 };
