@@ -4,11 +4,13 @@ const createModel = require('./model');
 const modifiers = require('./modifiers');
 
 module.exports = function createPhysics(params) {
+    params = params || {};
+    params.gravity = params.gravity || {x: 0, y: 0};
     const mouse = params.mouse;
     let hoveredObjects = [];
     const onHover = params.onHover;
     const world = new p2.World({
-        gravity:[0, 300]
+        gravity:[params.gravity.x, params.gravity.y]
     });
 
     const model =  createModel(params);

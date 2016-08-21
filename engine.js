@@ -23,7 +23,8 @@ const helpers = require('./helpers');
 const createKeyFrames = helpers.createKeyFrames;
 
 
-function createEngine() {
+function createEngine(params) {
+    params = params || {};
     const types = Object.create(null);
     types.default = {
 
@@ -55,7 +56,7 @@ function createEngine() {
         })
     }
 
-    const world = createPhysics({types, mouse, onHover});
+    const world = createPhysics({types, mouse, onHover, gravity: params.gravity});
 
     const overlay = createPhysics({types, mouse});
     const hud = createPhysics({types, mouse});
