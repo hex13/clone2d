@@ -68,7 +68,8 @@ module.exports = function createPhysics(params) {
 
 
         if (this !== engine.world || !window.paused)
-            world.step(1/60, 1/60, 10);
+            //world.step(1/60, 1/60, 10);
+            world.step(1/60);
 
         if (this !== engine.world || !window.paused)
         this.objects.forEach(o => {
