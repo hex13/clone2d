@@ -42,7 +42,6 @@ const World = {
     },
 
     createObject(data) {
-
         //const resolvedObject = resolveObject(params)
         // resolveData etc.
         const params = resolveParams(data);
@@ -57,6 +56,10 @@ const World = {
         if (!aborted) {
             Object.assign(obj, params);///???? TODO this assigns only own properties :/
 
+        }
+
+        if (obj.img && (typeof obj.img === 'string' || obj.img instanceof String)) {
+            obj.img = types[obj.img].img;
         }
 
         createKeyFrames(obj);
