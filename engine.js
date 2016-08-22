@@ -207,6 +207,16 @@ function createEngine(params) {
     // autochanging coordinates, paths etc.
 
     function renderLoop() {
+        const now = new Date;
+        fps++;
+        if (now - last > (1000/4)) {
+            lastFps = ~~(fps * 1000 / (now - last));
+            fps = 0;
+            last = now;
+
+        }
+
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         views.forEach(v => v.render(ctx))
         ctx.fillStyle = 'green'
@@ -216,14 +226,6 @@ function createEngine(params) {
 
     function modelLoop() {
 
-        const now = new Date;
-        fps++;
-        if (now - last > (1000/4)) {
-            lastFps = ~~(fps * 1000 / (now - last));
-            fps = 0;
-            last = now;
-
-        }
 
         const systemTime = +new Date;
         models.forEach(model => {
