@@ -272,20 +272,25 @@ module.exports = function createPhysics(params) {
     };
     function contact(data) {
        const tmpA = data.bodyA._obj;
-       const tmpB = data.bodyA._obj;
-       let a;
-       let b;
-       if (tmpA.type == 'coin') {
-           a = tmpA;
-           b = tmpB;
-       } else if (tmpB.type == 'coin') {
-           a = tmpB;
-           b = tmpA;
-       }
-       if (a/* && !a.constraints*/) {
-           a.dead = true;
-       }
+       const tmpB = data.bodyB._obj;
+
+       let a = tmpA;
+       let b = tmpB;
+
+       a.onCollision && a.onCollision(b);
+       b.onCollision && b.onCollision(a);
+    //    if (tmpA.type == 'coin') {
+    //        a = tmpA;
+    //        b = tmpB;
+    //    } else if (tmpB.type == 'coin') {
+    //        a = tmpB;
+    //        b = tmpA;
+    //    }
+    //    if (a/* && !a.constraints*/) {
+    //        a.dead = true;
+    //    }
     }
+    world.on('beginContact', contact);
     world.on('postBroadphase', function (d) {
         const objects = d.pairs.map(p => p._obj);
         for (let i = 0; i < d.pairs.length/2; i++) {
