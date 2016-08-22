@@ -4,6 +4,8 @@ const createModel = require('./model');
 const modifiers = require('./modifiers');
 
 module.exports = function createPhysics(params) {
+    window.p2 = window.p2 || p2;
+    const engine = params.engine;
     params = params || {};
     params.gravity = params.gravity || {x: 0, y: 0};
     const mouse = params.mouse;
@@ -78,19 +80,18 @@ module.exports = function createPhysics(params) {
             }
         });
 
-
-        if (this !== engine.world || !window.paused)
+        if (!window.paused)
             //world.step(1/60, 1/60, 10);
             world.step(1/60);
 
-        if (this !== engine.world || !window.paused)
-        this.objects.forEach(o => {
-            const body = o._p2body;
-            o.x = body.position[0];
-            o.y = body.position[1];
-            [o.vx, o.vy] = body.velocity;
-            o.rotation = body.angle;
-        });
+        if (!window.paused)
+            this.objects.forEach(o => {
+                const body = o._p2body;
+                o.x = body.position[0];
+                o.y = body.position[1];
+                [o.vx, o.vy] = body.velocity;
+                o.rotation = body.angle;
+            });
 
 
         const newHoveredObjects = this.hitTest(mouse);
