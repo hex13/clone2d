@@ -12,6 +12,18 @@ module.exports = function createPhysics(params) {
     const world = new p2.World({
         gravity:[params.gravity.x, params.gravity.y]
     });
+    const materials = [];
+    for (let i = 0; i < 4; i++) {
+        materials.push(new p2.Material());
+    }
+    world.addContactMaterial(
+        new p2.ContactMaterial(materials[0], materials[0], {
+            restitution: 0.9,
+        })
+    );
+    //world.defaultContactMaterial.restitution = 'restitution' in params? params.restitution : 0.5;
+    //world.setGlobalStiffness(500);
+
 
     const model =  createModel(params);
 
@@ -120,8 +132,12 @@ module.exports = function createPhysics(params) {
             angularVelocity: obj.vr || 0,
             velocity: [obj.vx || 0, obj.vy || 0],
             angularDamping: 0.8,
-            allowSleep: false,collisionResponse:true
+            allowSleep: false,collisionResponse:true,
+            gravityScale: 'gravityScale' in obj? obj.gravityScale : 1,
         });
+        body.damping = 0;
+        body.angularDamping = 0;
+
 
 
 
@@ -132,7 +148,15 @@ module.exports = function createPhysics(params) {
         let shape;
         const displayAs = obj.displayAs || 'box';
 
-        if (obj.shape === 'rope') {
+        if (obj.shape === 'polygon') {
+            //console.log("POLY",body.fromPolygon(obj.points.map(p => [p.x, p.y]))  );
+            shape = new p2.Convex({
+                vertices: obj.points.map(p => [p.x, p.y])
+            });
+            //obj._p2body = body; // engine relies on this variable
+        //    return;
+        }
+        else if (obj.shape === 'rope') {
             // TODO we can't do this way... engine must recognize bodies as bodies (not as invisible parts)
             // because of need of reassigning updates from p2...
 
@@ -160,7 +184,8 @@ module.exports = function createPhysics(params) {
 
                 for (let j = 0; j < stepCount; x+= dx, y+= dy, j++) {
                     const link = this.createObject({
-                        displayAs: 'circle',
+                        shape: 'circle',
+                        displayAs: 'shape',
                         r: width/2,
                         width: width,
                         height: width,
@@ -204,7 +229,7 @@ module.exports = function createPhysics(params) {
             modifiers.modExplode.patch(obj, this);
             return
         }
-        else if (displayAs === 'box' || displayAs === 'rect' ||  displayAs === 'text') {
+        else if (obj.shape === 'rect' || displayAs === 'box' || displayAs === 'rect' ||  displayAs === 'text') {
             shape = new p2.Box({
                 width: 'width' in obj? obj.width : 100,
                 height: 'height' in obj? obj.height : 100
@@ -214,7 +239,12 @@ module.exports = function createPhysics(params) {
                 radius: obj.r || 1
             });
         }
-        body.addShape(shape);
+        if (shape) {
+            if ('material' in obj) {
+                shape.material = materials[obj.material];
+            }
+            body.addShape(shape);
+        }
 
         obj._p2body = body;
         body._obj = obj;
