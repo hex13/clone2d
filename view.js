@@ -180,6 +180,7 @@ exports.view = {
                 const x = obj.x;
                 const y = obj.y;
                 const displayAs = obj.displayAs || 'image';
+                const scale = obj.scale || 1;
                 //ctx.globalAlpha = typeof obj.opacity == 'number'? obj.opacity : 1;
                 ctx.globalAlpha = typeof obj.opacity == 'number'? obj.opacity : 1;
 
@@ -201,11 +202,17 @@ exports.view = {
                 ctx.rotate(rotation);
                 ctx.translate(-center.x, -center.y);
                 ctx.translate(obj.x, obj.y);
+                if (scale != 1) ctx.scale(scale, scale);
 
                 // ctx.translate(-center.x, -center.y);
                 // ctx.translate(center.x, center.y);
                 if ('fill' in obj) {
                     ctx.fillStyle = obj.fill;
+                }
+
+                if (obj.displayAs == 'pattern') {
+                    const pattern = ctx.createPattern(obj.img, 'repeat');
+                    ctx.fillStyle = pattern;
                 }
 
 
@@ -229,8 +236,7 @@ exports.view = {
                         ctx.restore();
 
                     } else if (displayAs === 'image') {
-                        const scale = obj.scale || 1;
-                        const w = obj.width * scale;
+                        const w = obj.width * scale; // TODO!!!! we're scaling globally now!!!
                         const h = obj.height * scale;
                         if (obj.showBoundingRect) {
                             ctx.save();
@@ -243,23 +249,32 @@ exports.view = {
                         } else {
                             ctx.drawImage(obj.img, -w/2, -h/2, w, h);
                         }
-                    } else if (displayAs === 'circle') {
+                    } else if (obj.shape === 'circle') {
                         ctx.beginPath();
                         ctx.arc(0, 0, obj.r, 0, Math.PI * 2, false);
                         ctx.stroke();
                         ctx.fill();
-                    } else if (displayAs === 'rect') {
+                    } else if (obj.shape === 'rect' || displayAs === 'rect') {
                         //ctx.fillRect(~~obj.x, ~~obj.y, obj.width, obj.height);
                         //ctx.setLineDash([10, 10]);
+
 
                         ctx.lineWidth = 2;
 
                         ctx.strokeRect(-obj.width / 2, -obj.height / 2, obj.width, obj.height);
                         ctx.fillRect(-obj.width / 2, -obj.height / 2, obj.width, obj.height);
-                    } else if (displayAs === 'path') {
+                    } else if (displayAs === 'path' || obj.shape === 'polygon') {
                         ctx.lineCap = 'round';
                         if ('color' in obj) ctx.strokeStyle = obj.color;
-                        if ('width' in obj) ctx.lineWidth = obj.width;
+                        if (obj.shape === 'polygon') {
+                            ctx.lineWidth = 1;
+                            // if (obj.img) {
+                            //     const pattern = ctx.createPattern(obj.img, 'repeat');
+                            //     ctx.fillStyle = pattern;
+                            // }
+                        } else {
+                            if ('width' in obj) ctx.lineWidth = obj.width;
+                        }
                         ctx.beginPath();
                         const points = obj.points;
                         ctx.moveTo( points[0].x,  points[0].y);
@@ -269,7 +284,7 @@ exports.view = {
                         }
 
                         ctx.stroke();
-
+                        if (obj.shape === 'polygon') ctx.fill();
                     }
                 }
 
