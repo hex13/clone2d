@@ -55,7 +55,9 @@ function createEngine(params) {
         })
     }
 
-    const world = createPhysics({types, mouse, onHover, gravity: params.gravity});
+    const world = createPhysics(
+        Object.assign({types, mouse, onHover}, params.physics)
+    );
 
     const overlay = createPhysics({types, mouse});
     const hud = createPhysics({types, mouse});
