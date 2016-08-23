@@ -53,7 +53,7 @@ exports.modExplode = {
        if (ttl < 400) return;
         const allowed = ['box', 'image', 'rect', 'circle', 'shape'];
         if (obj.joinA || obj.joinB) return;
-        if (obj.constraints) return;
+        //if (obj.constraints) return;
         if (obj.shape == 'rope' || obj.type == 'rope') return;
 
         //console.log('ooo', obj.displayAs, obj.type, obj.shape)

@@ -23,6 +23,17 @@ module.exports = function createPhysics(params) {
             restitution: 0.9,
         })
     );
+    const worldConstraints = [];
+    function addConstraint(constraint) {
+        console.log("addConstraint", constraint);
+        console.log("addConstraint bodies", constraint.bodyA, constraint.bodyB);
+        world.addConstraint(constraint);
+        worldConstraints.push({
+            constraint: constraint,
+            bodyA: constraint.bodyA,
+            bodyB: constraint.bodyB,
+        });
+    }
     //world.defaultContactMaterial.restitution = 'restitution' in params? params.restitution : 0.5;
     //world.setGlobalStiffness(500);
 
@@ -121,8 +132,18 @@ module.exports = function createPhysics(params) {
     }
 
     model.removeObject = function (obj) {
-        if (obj._p2body)
+        if (obj._p2body) {
+            const body = obj._p2body;
+            for (let i = worldConstraints.length - 1; i >= 0; i--) {
+                const c = worldConstraints[i];
+                const shouldRemove = c.bodyA === body || c.bodyB === body;
+                if (shouldRemove) {
+                    world.removeConstraint(c.constraint);
+                    worldConstraints.splice(i, 1)
+                }
+            }
             world.removeBody(obj._p2body);
+        }
     }
 
     model.afterCreateObject = function (obj) {
@@ -203,7 +224,7 @@ module.exports = function createPhysics(params) {
                            collideConnected: false,
                         })
                         //linkConstraint.setStiffness(400);
-                        world.addConstraint(linkConstraint);
+                        addConstraint(linkConstraint);
                     }
                     lastLink = link;
                     chain.push(link);
@@ -211,12 +232,12 @@ module.exports = function createPhysics(params) {
 
             }
             if (obj.jointA) {
-                 world.addConstraint(new p2.DistanceConstraint(chain[0]._p2body, obj.jointA._p2body,{
+                 addConstraint(new p2.DistanceConstraint(chain[0]._p2body, obj.jointA._p2body,{
                      distance:1,
                  }));
             }
             if (obj.jointB) {
-                 world.addConstraint(new p2.DistanceConstraint(chain[chain.length - 1]._p2body, obj.jointB._p2body,{
+                 addConstraint(new p2.DistanceConstraint(chain[chain.length - 1]._p2body, obj.jointB._p2body,{
                      distance:1,
                  }));
             }
@@ -261,7 +282,7 @@ module.exports = function createPhysics(params) {
                 constraint = new p2.LockConstraint(obj._p2body, obj.constraints.lock._p2body);
             }
             if (constraint) {
-                world.addConstraint(constraint);
+                addConstraint(constraint);
 
                  obj.removeConstraints = () => {
                      world.removeConstraint(constraint);
@@ -297,13 +318,13 @@ module.exports = function createPhysics(params) {
         for (let i = 0; i < d.pairs.length/2; i++) {
             const a = d.pairs[i * 2]._obj;
             const b = d.pairs[i * 2 + 1]._obj;
-            if (a.isDestroyer && !b.ignore && !b.constraints && !b.isImmortal) {
+            if (a.isDestroyer && !b.ignore /*&& !b.constraints */ && !b.isImmortal) {
                 modifiers.modExplode.patch(b) //o.d
-
+                //b.dead = true;
             }
-            if (b.isDestroyer && !a.ignore && !a.constraints && !a.isImmortal) {
+            if (b.isDestroyer && !a.ignore /*&& !a.constraints */&& !a.isImmortal) {
                 modifiers.modExplode.patch(a) //o.d
-
+                //a.dead = true;
             }
 
         }
