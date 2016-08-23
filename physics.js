@@ -34,11 +34,23 @@ module.exports = function createPhysics(params) {
             bodyB: constraint.bodyB,
         });
     }
+    function removeConstraintsForBody(body) {
+        for (let i = worldConstraints.length - 1; i >= 0; i--) {
+            const c = worldConstraints[i];
+            const shouldRemove = c.bodyA === body || c.bodyB === body;
+            if (shouldRemove) {
+                world.removeConstraint(c.constraint);
+                worldConstraints.splice(i, 1)
+            }
+        }
+    }
     //world.defaultContactMaterial.restitution = 'restitution' in params? params.restitution : 0.5;
     //world.setGlobalStiffness(500);
 
 
     const model =  createModel(params);
+
+    model.addConstraint = addConstraint;
 
     world.on("postStep", () =>{
         //if (this === engine.world && window.paused) return;
@@ -134,15 +146,8 @@ module.exports = function createPhysics(params) {
     model.removeObject = function (obj) {
         if (obj._p2body) {
             const body = obj._p2body;
-            for (let i = worldConstraints.length - 1; i >= 0; i--) {
-                const c = worldConstraints[i];
-                const shouldRemove = c.bodyA === body || c.bodyB === body;
-                if (shouldRemove) {
-                    world.removeConstraint(c.constraint);
-                    worldConstraints.splice(i, 1)
-                }
-            }
-            world.removeBody(obj._p2body);
+            removeConstraintsForBody(body);
+            world.removeBody(body);
         }
     }
 
@@ -208,6 +213,7 @@ module.exports = function createPhysics(params) {
                     const link = this.createObject({
                         shape: 'circle',
                         displayAs: 'shape',
+                        isImmortal: obj.isImmortal,
                         r: width/2,
                         width: width,
                         height: width,
@@ -272,6 +278,11 @@ module.exports = function createPhysics(params) {
         body._obj = obj;
 
         world.addBody(body);
+
+        obj.removeConstraints =function () {
+            removeConstraintsForBody(this._p2body);
+        }
+
         if (obj.constraints) {
             let constraint;
             if (obj.constraints.distance) {
@@ -283,11 +294,6 @@ module.exports = function createPhysics(params) {
             }
             if (constraint) {
                 addConstraint(constraint);
-
-                 obj.removeConstraints = () => {
-                     world.removeConstraint(constraint);
-                 }
-
             }
         }
 
