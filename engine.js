@@ -71,7 +71,7 @@ function createEngine(params) {
         Object.assign(inst, methods);
         inst.getObjects = getObjects;
 
-        inst.init({canvas, ctx});
+        inst.init({canvas, ctx, antialiasing: params.antialiasing});
         inst.model = model;
         return inst;
     }

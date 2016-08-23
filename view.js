@@ -137,15 +137,21 @@ exports.view = {
     get objects() {
         return this.getObjects();
     },
-    init({canvas, ctx, viewport}) {
+    init({canvas, ctx, viewport, antialiasing = true}) {
         this.viewport = this.viewport || DEFAULT_VIEWPORT;
         //console.log("VV", this.viewport);
+        this.camera = {x: 0, y: 0, rotation: 0};
+        this.color = ['red', 'green','blue', 'white'][~~(Math.random()*4)];
+        this.antialiasing = antialiasing;
 
     },
     render(ctx) {
         const viewport = this.viewport || {x: 400, y: 300, rotation: 0, width: 800, height: 600, scale: 1};
+        const camera = this.camera;
         //const viewport = this.viewport || {x: 0, y: 0, rotation: 0};
         ctx.save();
+        ctx.imageSmoothingEnabled = this.antialiasing;
+
         //ctx.translate(viewport.x + viewport.width / 2, viewport.y + viewport.height / 2)
         ctx.translate(viewport.x, viewport.y)
         ctx.rotate(viewport.rotation);
@@ -176,7 +182,9 @@ exports.view = {
             }
             renderables.forEach(obj => {
                 ctx.save();
-
+                if ('antialiasing' in obj) {
+                    ctx.imageSmoothingEnabled = obj.antialiasing;
+                }
                 const x = obj.x;
                 const y = obj.y;
                 const displayAs = obj.displayAs || 'image';
