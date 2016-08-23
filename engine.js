@@ -209,7 +209,7 @@ function createEngine(params) {
     function renderLoop() {
         const now = new Date;
         fps++;
-        if (now - last > (1000/4)) {
+        if (now - last >= (1000/8)) {
             lastFps = ~~(fps * 1000 / (now - last));
             fps = 0;
             last = now;
@@ -219,7 +219,7 @@ function createEngine(params) {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         views.forEach(v => v.render(ctx))
-        ctx.fillStyle = 'green'
+        ctx.fillStyle = lastFps > 50? 'green' : (lastFps > 25? '#ea0' : 'red');
         ctx.fillText('fps:' + lastFps, 10, 100);
         requestAnimationFrame(renderLoop);
     }
