@@ -79,9 +79,9 @@ function createEngine(params) {
         displayAs: 'rect',
         width: 800,
         height: 600,
-        color: 'rgba(255,0,0,0.4)',
-        x: 400,
-        y: 300 + 100,
+        color: 'rgba(255,0,0,0.0)',
+        x: 0,
+        y: 0,
         scale: 1,
         rotation: 0,
         opacity: 0,
@@ -96,10 +96,11 @@ function createEngine(params) {
     let a = 0;
     //setInterval(() => {worldViewport.scale = 0.04*Math.cos(a+=0.1)+1}, 200);
 
-
+    const camera = {x: 400, y: 200, rotation: 0, scale: 0.5};//TODO zero
     const views = [
         createView(() => world.objects, world, {
             viewport: worldViewport,
+            camera
         }),
         createView(() => menu.objects, menu, {
         }),
@@ -107,7 +108,8 @@ function createEngine(params) {
             //viewport: worldViewport
         }),
         createView(() => overlay.objects, overlay, {
-            viewport: worldViewport
+            viewport: worldViewport,
+            camera
         }),
 
 //         createView(() => world.objects, world, {
