@@ -49,6 +49,7 @@ const World = {
 
         const obj = Object.create(proto);
 
+
         let aborted;
         if (obj.init) {
             aborted = obj.init(params)===false;
@@ -62,6 +63,7 @@ const World = {
             obj.img = types[obj.img].img;
         }
 
+
         createKeyFrames(obj);
 
         if (!obj.hasOwnProperty('width') && obj.img) {
@@ -74,6 +76,11 @@ const World = {
         obj.kinematic = !!obj.kinematic;
         obj.mass = 'mass' in obj? obj.mass : 1;
         obj.vr = obj.vr || 0;
+        obj.x = obj.x || 0;
+        obj.y = obj.y || 0;
+        obj.vx = obj.vx || 0;
+        obj.vy = obj.vy || 0;
+        obj.rotation = obj.rotation || 0;
 
         obj.t0 = +new Date - startTime;
         obj.model = obj.world = this;//TODO remove obj.world
