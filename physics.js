@@ -112,7 +112,8 @@ module.exports = function createPhysics(params) {
                 const body = o._p2body;
                 o.x = body.position[0];
                 o.y = body.position[1];
-                [o.vx, o.vy] = body.velocity;
+                o.vx = body.velocity[0];
+                o.vy = body.velocity[1];
                 o.rotation = body.angle;
             });
 
@@ -211,6 +212,7 @@ module.exports = function createPhysics(params) {
 
                 for (let j = 0; j < stepCount; x+= dx, y+= dy, j++) {
                     const link = this.createObject({
+                        kind: 'rope',
                         shape: 'circle',
                         displayAs: 'shape',
                         isImmortal: obj.isImmortal,
