@@ -119,13 +119,51 @@ const DEFAULT_VIEWPORT = {
 };
 exports.view = {
     emit(name, event) {
-        const viewport = this.viewport || DEFAULT_VIEWPORT;
 
         const viewEvent = Object.create(event);
+        const camera = this.camera;
 
-        viewEvent.x = (event.x - (viewport.x - viewport.width/2)) / viewport.scale;
-        viewEvent.y = (event.y - (viewport.y - viewport.height/2)) / viewport.scale;
+        const cos = Math.cos(camera.rotation);
+        const sin = Math.sin(camera.rotation);
 
+
+        let {x, y} = viewEvent;
+
+        x -= this.viewport.width / 2;
+        y -= this.viewport.height / 2;
+
+        x /= camera.scale;
+        y /= camera.scale;
+
+
+
+        const newX = x * cos - y * sin;
+        const newY = x * sin + y * cos;
+
+        x = x * cos - y * sin;
+        y = x * sin + y * cos;
+
+        x = newX;
+        y = newY;
+
+        // x += this.viewport.width / 2;
+        // y += this.viewport.height / 2;
+        //
+        //
+        x += camera.x;
+        y += camera.y;
+
+
+
+        // x += this.viewport.width / 2;
+        // y += this.viewport.height / 2;
+
+
+
+
+
+        viewEvent.x = x;
+        viewEvent.y = y;
         if (this[name]) {
 
             this[name](viewEvent);
@@ -140,7 +178,7 @@ exports.view = {
     init({canvas, ctx, viewport, antialiasing = true}) {
         this.viewport = this.viewport || DEFAULT_VIEWPORT;
         //console.log("VV", this.viewport);
-        this.camera = {x: 0, y: 0, rotation: 0};
+        this.camera = this.camera || {x: 0, y: 0, rotation: 0};
         this.color = ['red', 'green','blue', 'white'][~~(Math.random()*4)];
         this.antialiasing = antialiasing;
 
@@ -152,15 +190,44 @@ exports.view = {
         ctx.save();
         ctx.imageSmoothingEnabled = this.antialiasing;
 
-        //ctx.translate(viewport.x + viewport.width / 2, viewport.y + viewport.height / 2)
-        ctx.translate(viewport.x, viewport.y)
-        ctx.rotate(viewport.rotation);
-        ctx.translate(-viewport.x, -viewport.y)
+        // ctx.fillStyle = 'green';
+        // ctx.fillRect(400-10,300-10,20,20)
 
-        ctx.translate(viewport.x - viewport.width/2, viewport.y - viewport.height/2);
+        //ctx.imageSmoothingEnabled = this.antialiasing;
+
+        // this.camera.rotation += 0.01;
+        //  this.camera.y += 1;
+        //
+        // ctx.translate(-camera.x, -camera.y);
+        // ctx.rotate(camera.rotation);
+        // ctx.translate(camera.x, camera.y);
 
 
-        ctx.scale(viewport.scale, viewport.scale);
+        ctx.translate(this.viewport.width / 2, this.viewport.height / 2);
+
+        // TEST
+        ctx.scale(camera.scale, camera.scale)
+        //
+
+
+
+        // ctx.fillStyle = 'orange';
+        // ctx.fillRect(-5,-5,10,10)
+
+
+        ctx.rotate(-camera.rotation);
+
+        ctx.translate(-camera.x, -camera.y);
+
+
+        const matrix = ctx.currentTransform;
+
+        this.matrix = matrix;
+
+
+        // ctx.fillStyle = 'red';
+        // ctx.fillRect(-5,-5,10,10)
+
 
         const objects = this.objects;
 
@@ -190,7 +257,8 @@ exports.view = {
                 const displayAs = obj.displayAs || 'image';
                 const scale = obj.scale || 1;
                 //ctx.globalAlpha = typeof obj.opacity == 'number'? obj.opacity : 1;
-                ctx.globalAlpha = typeof obj.opacity == 'number'? obj.opacity : 1;
+                //ctx.globalAlpha = typeof obj.opacity == 'number'? obj.opacity : 1;
+                //ctx.globalAlpha = Math.max(0.3, ctx.globalAlpha)
 
                 if ('color' in obj) {
                     ctx.fillStyle = obj.color;
