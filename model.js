@@ -28,6 +28,78 @@ const World = {
     t0: new Date,
     age:0,
     state: 'running',
+
+    update({systemTime, lastSystemTime}) {
+        const world = this;
+        if (world.beforeUpdate) {
+            world.beforeUpdate();
+        }
+        const objects = world.objects;
+
+        const lapse = systemTime - (lastSystemTime || world.t0);
+
+        world.lapse(lapse);
+
+        objects.forEach((obj, i) => {
+            obj.onUpdate && obj.onUpdate();
+            const age = world.age - obj.t0;
+
+            const now = age;
+
+            const keyframes = obj.resolveKeyFrames? obj.resolveKeyFrames({now}) : obj.keyframes || [];
+
+            if (keyframes) {
+
+                let from, to;
+                for (let i = keyframes.length - 1; i >= 0; i--) {
+                    if (keyframes[i].t <= now) {
+                        from = keyframes[i];
+
+                        // set boolean properties on frame start
+                        // because program can't never go to the `to` frame
+                        // because there will be next frame...
+                        // TODO maybe flushFrame(previous), startFrame(current) or something?
+                        if (typeof from.dead == 'boolean') {
+                            obj.dead = from.dead;
+                        }
+
+                        to = keyframes[i + 1];
+                        break;
+                    }
+                }
+
+
+                if (from && to) {
+                    const duration = to.t - from.t;
+                    const relT = (now - from.t) / duration;
+                    ['x', 'y', 'scale', 'opacity', 'rotation', 'color', 'fill'].forEach(
+                        prop => {
+                            if (typeof from[prop] == 'number' && typeof to[prop] == 'number') {
+                                obj[prop] = from[prop] * (1 - relT) +  to[prop] * relT;
+                            }
+                        }
+                    );
+                }
+                if (obj.ttl && age > obj.ttl && obj.state != 'dying') {
+                    if (obj.die)
+                        obj.die({now});
+                    else
+                        obj.dead = true;
+                }
+            }
+        });
+        objects.forEach(o => {
+            if (o.dead) {
+                o.model.removeObject && o.model.removeObject(o);
+                if (o.afterDeath)
+                    o.afterDeath();
+
+            }
+        });
+        world.objects = objects.filter(o => !o.dead);
+
+    },
+
     lapse(lapse) {
         if (this.state == 'running') {
             this.age += lapse;

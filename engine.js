@@ -25,6 +25,7 @@ const createKeyFrames = helpers.createKeyFrames;
 
 
 function createEngine(params) {
+    const engine = {};
     const types = Object.create(null);
     types.default = {
 
@@ -104,11 +105,17 @@ function createEngine(params) {
             camera,
             canvas: canvas
         }),
-        createView(() => menu.objects, menu, {
+        // createView(() => menu.objects, menu, {
+        // }),
+        createView(() => ([{
+            shape: 'circle', r:100, fill:'red', displayAs: 'shape'
+        }]), hud, {
+            viewport: worldViewport,
+            canvas: overlayCanvas,
         }),
-        createView(() => hud.objects, hud, {
-            //viewport: worldViewport
-        }),
+        // createView(() => hud.objects, hud, {
+        //     //viewport: worldViewport
+        // }),
         // createView(() => overlay.objects, overlay, {
         //     viewport: worldViewport,
         //     camera,
@@ -210,6 +217,9 @@ function createEngine(params) {
     // and in view: reference to viewport (which can be animated etc.)
 
     // autochanging coordinates, paths etc.
+    const activeViews = [
+        views[0],views[1]
+    ];
 
     function renderLoop() {
         const now = new Date;
@@ -225,7 +235,10 @@ function createEngine(params) {
         // ctx.fillRect(0, 0, canvas.width, canvas.height);
         //views[3].render(ctx);
 
-        views[0].render(ctx);
+        //views.forEach(v=> v.render(ctx));
+        ctx.clearRect(0,0,800,600);
+        overlayCanvas.getContext('2d').clearRect(0,0,800,600);
+        activeViews.forEach(v=> v.render(ctx));
 
 
         //views.forEach(v => v.render(ctx))
@@ -240,7 +253,7 @@ function createEngine(params) {
         const systemTime = +new Date;
         models.forEach(model => {
             if (model.state == 'running' || model.state == 'resuming') {
-                update(model, {
+                model.update({
                     systemTime, lastSystemTime
                 });
             }
@@ -258,81 +271,7 @@ function createEngine(params) {
 
 
     let lastSystemTime;
-    function update(world, {systemTime, lastSystemTime}) {
-        if (world.beforeUpdate) {
-            world.beforeUpdate();
-        }
-        const objects = world.objects;
 
-        const lapse = systemTime - (lastSystemTime || world.t0);
-
-
-
-        world.lapse(lapse);
-        if (1||!window.abc) {
-
-            window.abc =1;
-        }
-
-        objects.forEach((obj, i) => {
-            obj.onUpdate && obj.onUpdate();
-            const age = world.age - obj.t0;
-
-            const now = age;
-
-            const keyframes = obj.resolveKeyFrames? obj.resolveKeyFrames({now}) : obj.keyframes || [];
-
-            if (keyframes) {
-
-                let from, to;
-                for (let i = keyframes.length - 1; i >= 0; i--) {
-                    if (keyframes[i].t <= now) {
-                        from = keyframes[i];
-
-                        // set boolean properties on frame start
-                        // because program can't never go to the `to` frame
-                        // because there will be next frame...
-                        // TODO maybe flushFrame(previous), startFrame(current) or something?
-                        if (typeof from.dead == 'boolean') {
-                            obj.dead = from.dead;
-                        }
-
-                        to = keyframes[i + 1];
-                        break;
-                    }
-                }
-
-
-                if (from && to) {
-                    const duration = to.t - from.t;
-                    const relT = (now - from.t) / duration;
-                    ['x', 'y', 'scale', 'opacity', 'rotation', 'color', 'fill'].forEach(
-                        prop => {
-                            if (typeof from[prop] == 'number' && typeof to[prop] == 'number') {
-                                obj[prop] = from[prop] * (1 - relT) +  to[prop] * relT;
-                            }
-                        }
-                    );
-                }
-                if (obj.ttl && age > obj.ttl && obj.state != 'dying') {
-                    if (obj.die)
-                        obj.die({now});
-                    else
-                        obj.dead = true;
-                }
-            }
-        });
-        objects.forEach(o => {
-            if (o.dead) {
-                o.model.removeObject && o.model.removeObject(o);
-                if (o.afterDeath)
-                    o.afterDeath();
-
-            }
-        });
-        world.objects = objects.filter(o => !o.dead);
-
-    }
 
     function createType(name, proto) {
         const typeObj = _.cloneDeep(proto);//Object.create(proto);
@@ -380,7 +319,8 @@ function createEngine(params) {
         setTimeout(cb, 500);
     }
 
-    return {
+
+    return Object.assign(engine, {
         getType,
         createType,
         world,
@@ -393,9 +333,9 @@ function createEngine(params) {
         hud,
         overlay,
         worldView: views[0],
-        hudView: views[2],
         modifiers: modifiers,
-    };
+        activeViews
+    });
 
 }
 

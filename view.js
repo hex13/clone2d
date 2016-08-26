@@ -198,7 +198,7 @@ exports.view = {
 
         //const viewport = this.viewport || {x: 0, y: 0, rotation: 0};
         ctx.save();
-        ctx.clearRect(0, 0, 800, 600);
+
 
 //        ctx.beginPath()
 
@@ -396,10 +396,12 @@ exports.view = {
 
 
 
-        this.ctx.clearRect(0,0,800,600);
+        
         this.ctx.drawImage(this.offscreenCanvas, 0, 0);
+
         // ctx.endPath();
         ctx.closePath();
+        ctx.clearRect(0, 0, 800, 600);
 
         ctx.fillStyle = 'rgba(255,0,0,255)';
 
