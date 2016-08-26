@@ -5,7 +5,28 @@ Note: this is a new project. But keep watching. I'm coding this intensively.
 
 Online demo: [https://hex13.github.io/apps/clone2d/](https://hex13.github.io/apps/clone2d/)
 
-First you must put `<canvas id="engine"></canvas>` in your HTML. Then:
+This engine is WIP. Documentation can be obsolete. When API and overall implementation will be ready for use, it will be announced (check my twitter: https://twitter.com/hex13code ).
+
+The goals are:
+====
+
+* it should be simple and awesome.
+* it should speed up rapid prototyping.
+* it should be easy to tweak everything in a game.
+* it should be easy to port games made in Clone2D.
+* it should exist visual editor for making games in Clone2D.
+
+it should be easy to port games made in Clone2D
+====
+
+Data driven approach can be helpful, if everything is data, then we just need find way to load this data in other environment and we have ported game).
+
+So think about Clone2D more like platform, portable data format which describes game, levels and objects in game. Written once, could be ported everythere etc.
+
+Although even in data driven approach it's hard to put everything as a data (think about event handlers. It's JavaScript runnable code), so porting will be easier if we port to other JavaScript framework, or at least if we have JavaScript engine on the platform we want to port to.
+
+
+First you must put `<canvas id="engine"></canvas>` in your HTML (this is obsolete, check out HTML in demo). Then:
 
 ```javascript
 const engine = require('clone2d')();
