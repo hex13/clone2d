@@ -47,7 +47,8 @@ function resolveExplosionParticle(obj, params) {
 }
 
 exports.modExplode = {
-    patch(obj, ttl = 2000, options) {
+    patch(obj, ttl = 2000, options, model) {
+        model = model || obj.model;
         options = options || EMPTY;
        if (obj.exploded) return;
        if (ttl < 400) return;
@@ -68,7 +69,7 @@ exports.modExplode = {
                 const sx = x * obj.width / piecesX;
                 const sy = y * obj.height / piecesY;
                 const angle = Math.atan2(y-piecesY/2, x-piecesX/2);
-                const curr = obj.model.createObject(
+                const curr = model.createObject(
                     resolveExplosionParticle(obj, {
                         piecesX, piecesY, sx, sy, ttl
                     })

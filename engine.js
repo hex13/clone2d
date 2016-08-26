@@ -8,7 +8,8 @@ const createModel = require('./model');
 const modifiers = require('./modifiers')
 
 
-const canvas = document.getElementById('engine');
+const canvas = document.getElementById('world');
+const overlayCanvas = document.getElementById('overlay');
 
 const ctx = canvas.getContext('2d');
 ctx.font = '28px sans-serif';
@@ -56,7 +57,7 @@ function createEngine(params) {
     }
 
     const world = createPhysics(
-        Object.assign({types, mouse, onHover}, params.physics)
+        Object.assign({types, mouse, onHover, overlay}, params.physics)
     );
 
     const overlay = createPhysics({types, mouse});
@@ -71,7 +72,7 @@ function createEngine(params) {
         Object.assign(inst, methods);
         inst.getObjects = getObjects;
 
-        inst.init({canvas, ctx, antialiasing: params.antialiasing});
+        inst.init({antialiasing: params.antialiasing});
         inst.model = model;
         return inst;
     }
@@ -98,19 +99,21 @@ function createEngine(params) {
 
     const camera = {x: 400, y: 200, rotation: 0, scale: 0.5};//TODO zero
     const views = [
-        createView(() => world.objects, world, {
+        createView(() => world.objects.concat(overlay.objects), world, {
             viewport: worldViewport,
-            camera
+            camera,
+            canvas: canvas
         }),
         createView(() => menu.objects, menu, {
         }),
         createView(() => hud.objects, hud, {
             //viewport: worldViewport
         }),
-        createView(() => overlay.objects, overlay, {
-            viewport: worldViewport,
-            camera
-        }),
+        // createView(() => overlay.objects, overlay, {
+        //     viewport: worldViewport,
+        //     camera,
+        //     canvas: overlayCanvas
+        // }),
 
 //         createView(() => world.objects, world, {
 //             viewport: menu.createObject({
@@ -148,8 +151,8 @@ function createEngine(params) {
     ];
 
     const e2xy = e => ({
-        x: e.pageX - canvas.offsetLeft,
-        y: e.pageY - canvas.offsetTop
+        x: e.pageX - canvas.parentNode.offsetLeft,
+        y: e.pageY - canvas.parentNode.offsetTop
     });
 
     canvas.addEventListener('mousemove', e => {
@@ -180,7 +183,7 @@ function createEngine(params) {
         views.forEach(v => v.click && v.click(e));
     });
 
-    canvas.addEventListener('mousedown', e => {
+    document.addEventListener('mousedown', e => {
         mouse.start = e2xy(e);
         mouse.down = true;
 
@@ -218,9 +221,14 @@ function createEngine(params) {
 
         }
 
+        // ctx.fillStyle = 'red';
+        // ctx.fillRect(0, 0, canvas.width, canvas.height);
+        //views[3].render(ctx);
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        views.forEach(v => v.render(ctx))
+        views[0].render(ctx);
+
+
+        //views.forEach(v => v.render(ctx))
         ctx.fillStyle = lastFps > 50? 'green' : (lastFps > 25? '#ea0' : 'red');
         ctx.fillText('fps:' + lastFps, 10, 100);
         requestAnimationFrame(renderLoop);
@@ -298,7 +306,7 @@ function createEngine(params) {
                 if (from && to) {
                     const duration = to.t - from.t;
                     const relT = (now - from.t) / duration;
-                    ['x', 'y', 'scale', 'opacity', 'rotation'].forEach(
+                    ['x', 'y', 'scale', 'opacity', 'rotation', 'color', 'fill'].forEach(
                         prop => {
                             if (typeof from[prop] == 'number' && typeof to[prop] == 'number') {
                                 obj[prop] = from[prop] * (1 - relT) +  to[prop] * relT;

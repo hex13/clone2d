@@ -175,25 +175,37 @@ exports.view = {
     get objects() {
         return this.getObjects();
     },
-    init({canvas, ctx, viewport, antialiasing = true}) {
+    init({viewport, antialiasing = true}) {
         this.viewport = this.viewport || DEFAULT_VIEWPORT;
         //console.log("VV", this.viewport);
         this.camera = this.camera || {x: 0, y: 0, rotation: 0};
         this.color = ['red', 'green','blue', 'white'][~~(Math.random()*4)];
         this.antialiasing = antialiasing;
 
+        if (this.canvas) {
+            this.ctx = this.canvas.getContext('2d');
+            this.offscreenCanvas = document.createElement('canvas');
+            this.offscreenCanvas.width = this.canvas.width;
+            this.offscreenCanvas.height = this.canvas.height;
+            this.offscreenCtx = this.offscreenCanvas.getContext('2d');
+        }
     },
-    render(ctx) {
+    render(outCtx) {
+
+        const ctx = this.offscreenCtx;
         const viewport = this.viewport || {x: 400, y: 300, rotation: 0, width: 800, height: 600, scale: 1};
         const camera = this.camera;
+
         //const viewport = this.viewport || {x: 0, y: 0, rotation: 0};
         ctx.save();
-        ctx.imageSmoothingEnabled = this.antialiasing;
+        ctx.clearRect(0, 0, 800, 600);
+
+//        ctx.beginPath()
 
         // ctx.fillStyle = 'green';
         // ctx.fillRect(400-10,300-10,20,20)
 
-        //ctx.imageSmoothingEnabled = this.antialiasing;
+        ctx.imageSmoothingEnabled = this.antialiasing;
 
         // this.camera.rotation += 0.01;
         //  this.camera.y += 1;
@@ -257,7 +269,7 @@ exports.view = {
                 const displayAs = obj.displayAs || 'image';
                 const scale = obj.scale || 1;
                 //ctx.globalAlpha = typeof obj.opacity == 'number'? obj.opacity : 1;
-                //ctx.globalAlpha = typeof obj.opacity == 'number'? obj.opacity : 1;
+                ctx.globalAlpha = typeof obj.opacity == 'number'? obj.opacity : 1;
                 //ctx.globalAlpha = Math.max(0.3, ctx.globalAlpha)
 
                 if ('color' in obj) {
@@ -276,8 +288,8 @@ exports.view = {
                 //const center =  {x: 100, y: 100}
                 ctx.translate(center.x, center.y);
                 ctx.rotate(rotation);
-                ctx.translate(-center.x, -center.y);
-                ctx.translate(obj.x, obj.y);
+                ctx.translate(-center.x + obj.x, -center.y + obj.y);
+                //ctx.translate(obj.x, obj.y);
                 if (scale != 1) ctx.scale(scale, scale);
 
                 // ctx.translate(-center.x, -center.y);
@@ -307,37 +319,42 @@ exports.view = {
 
                         const padding = 4;
                         ctx.fillStyle = 'rgba(10,80,120,0.4)';
-                        ctx.globalCompositeOperation = 'hue';
+                        //ctx.globalCompositeOperation = 'hue';
                         ctx.fillRect(-obj.width/2-padding, -obj.height/2-padding, obj.width + 2 * padding, obj.height + 2 * padding);
                         ctx.restore();
 
                     } else if (displayAs === 'image') {
                         const w = obj.width * scale; // TODO!!!! we're scaling globally now!!!
                         const h = obj.height * scale;
-                        if (obj.showBoundingRect) {
-                            ctx.save();
-                            ctx.fillStyle = 'rgba(0,100,100,0.6)';
-                            ctx.fillRect(-obj.width/2, -obj.height/2, obj.width, obj.height);
-                            ctx.restore();
-                        }
+                        // if (obj.showBoundingRect) {
+                        //     ctx.save();
+                        //     ctx.fillStyle = 'rgba(0,100,100,0.6)';
+                        //     ctx.fillRect(-obj.width/2, -obj.height/2, obj.width, obj.height);
+                        //     ctx.restore();
+                        // }
+                        ctx.beginPath();
                         if ('sx' in obj || 'sy' in obj) {
-                            ctx.drawImage(obj.img, obj.sx || 0, obj.sy || 0, obj.width, obj.height, -w/2, -h/2, w, h);
+                            ctx.drawImage(obj.img, ~~(obj.sx || 0), ~~(obj.sy || 0), obj.width, obj.height, ~~(-w/2), ~(-h/2), w, h);
                         } else {
-                            ctx.drawImage(obj.img, -w/2, -h/2, w, h);
+                            ctx.drawImage(obj.img, ~~(-w/2), ~~(-h/2), w, h);
                         }
                     } else if (obj.shape === 'circle') {
                         ctx.beginPath();
                         ctx.arc(0, 0, obj.r, 0, Math.PI * 2, false);
-                        ctx.stroke();
+                        ctx.closePath();
+                        if ('color' in obj)
+                            ctx.stroke();
                         ctx.fill();
+
                     } else if (obj.shape === 'rect' || displayAs === 'rect') {
                         //ctx.fillRect(~~obj.x, ~~obj.y, obj.width, obj.height);
                         //ctx.setLineDash([10, 10]);
 
 
-                        ctx.lineWidth = 2;
-
-                        ctx.strokeRect(-obj.width / 2, -obj.height / 2, obj.width, obj.height);
+                        //ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        if ('color' in obj)
+                            ctx.strokeRect(-obj.width / 2, -obj.height / 2, obj.width, obj.height);
                         ctx.fillRect(-obj.width / 2, -obj.height / 2, obj.width, obj.height);
                     } else if (displayAs === 'path' || obj.shape === 'polygon') {
                         ctx.lineCap = 'round';
@@ -358,15 +375,34 @@ exports.view = {
                         for (let i = 1; i < points.length; i++) {
                             ctx.lineTo(points[i].x, points[i].y);
                         }
+                        ctx.closePath();
 
                         ctx.stroke();
                         if (obj.shape === 'polygon') ctx.fill();
+
                     }
                 }
 
                 ctx.restore();
             });
         }
+
         ctx.restore();
+        //outCtx.fillStyle = 'rgba(0,0,0,0.6)';
+        //outCtx.clearRect(0, 0, 800, 600);
+        //ctx.beginPath();
+        //outCtx.globalCompositeOperation = 'hue';
+
+
+
+
+        this.ctx.clearRect(0,0,800,600);
+        this.ctx.drawImage(this.offscreenCanvas, 0, 0);
+        // ctx.endPath();
+        ctx.closePath();
+
+        ctx.fillStyle = 'rgba(255,0,0,255)';
+
+
     }
 }

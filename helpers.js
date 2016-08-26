@@ -17,7 +17,12 @@ exports.createKeyFrames = function createKeyFrames(obj, now = 0) {
     }
     if (obj.keyframes && obj.keyframes.length && obj.keyframes[0].t != now) {
         // TODO DRY
-        obj.keyframes.unshift({t:now, x: obj.x, y: obj.y, scale: obj.scale, opacity: obj.opacity, 'rotation': obj.rotation});
+        obj.keyframes.unshift(
+            {t:now, x: obj.x, y: obj.y,
+                scale: obj.scale, opacity: obj.opacity, 'rotation': obj.rotation,
+                color: obj.color, fill: obj.fill
+            }
+        );
     }
 };
 
