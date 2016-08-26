@@ -6,6 +6,7 @@ const modifiers = require('./modifiers');
 module.exports = function createPhysics(params) {
     window.p2 = window.p2 || p2;
     const engine = params.engine;
+    const overlay = params.overlay;
     params = params || {};
     params.gravity = params.gravity || {x: 0, y: 0};
     const mouse = params.mouse;
@@ -118,7 +119,8 @@ module.exports = function createPhysics(params) {
             });
 
 
-        const newHoveredObjects = this.hitTest(mouse);
+        const newHoveredObjects = [];//this.hitTest(mouse);
+        //TODO lazy
 
         onHover && onHover(hoveredObjects, newHoveredObjects);
         hoveredObjects = newHoveredObjects;
@@ -138,7 +140,6 @@ module.exports = function createPhysics(params) {
 
     model.click = function (e) {
         const bodies = world.hitTest([e.viewX, e.viewY], world.bodies);
-        document.title = bodies.length;
         // bodies.forEach(b => {
         //     b.position = [10,10]
         // })
@@ -160,7 +161,8 @@ module.exports = function createPhysics(params) {
             angularVelocity: obj.vr || 0,
             velocity: [obj.vx || 0, obj.vy || 0],
             angularDamping: 0.8,
-            allowSleep: false,collisionResponse:true,
+            allowSleep: true,
+            collisionResponse:true,
             gravityScale: 'gravityScale' in obj? obj.gravityScale : 1,
         });
         body.damping = 0;
@@ -327,11 +329,13 @@ module.exports = function createPhysics(params) {
             const a = d.pairs[i * 2]._obj;
             const b = d.pairs[i * 2 + 1]._obj;
             if (a.isDestroyer && !b.ignore /*&& !b.constraints */ && !b.isImmortal) {
-                modifiers.modExplode.patch(b) //o.d
+                modifiers.modExplode.patch(b, 2000, {}, overlay) //o.d
+                b.onExplosion && b.onExplosion();
                 //b.dead = true;
             }
             if (b.isDestroyer && !a.ignore /*&& !a.constraints */&& !a.isImmortal) {
-                modifiers.modExplode.patch(a) //o.d
+                modifiers.modExplode.patch(a, 2000, {}, overlay) //o.d
+                a.onExplosion && a.onExplosion();
                 //a.dead = true;
             }
 
