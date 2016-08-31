@@ -43,6 +43,7 @@ const World = {
         objects.forEach((obj, i) => {
             obj.onUpdate && obj.onUpdate();
             const age = world.age - obj.t0;
+            obj.age = age;
 
             const now = age;
 
@@ -120,6 +121,8 @@ const World = {
         const proto = resolvePrototype(data);
 
         const obj = Object.create(proto);
+        obj.isDestroyer = false;
+        obj.isImmortal = true;
 
 
         let aborted;

@@ -76,7 +76,10 @@ module.exports = function createPhysics(params) {
                         body.angle = u.rotation;
                     }
                     if ('vx' in u || 'vy' in u) {
-                        body.velocity = [u.vx || 0, u.vy || 0];
+                        body.velocity = [
+                            u.vx || o.vx || 0,
+                            u.vy || o.vy || 0
+                        ];
                     }
                     if ('vr' in u) {
                         body.angularVelocity = u.vr;
@@ -167,7 +170,13 @@ module.exports = function createPhysics(params) {
         });
         body.damping = 0;
         body.angularDamping = 0;
+        if ('damping' in obj) {
+            body.damping = obj.damping;
+        }
 
+        if ('angularDamping' in obj) {
+            body.angularDamping = obj.angularDamping;
+        }
 
 
 
@@ -178,7 +187,18 @@ module.exports = function createPhysics(params) {
         let shape;
         const displayAs = obj.displayAs || 'box';
 
-        if (obj.shape === 'polygon') {
+        if (obj.shape === 'heightfield') {
+            console.log("HEIGHT");
+//            const data = [100, 100, 200, 300, 0, 0, 100];
+            //const data = [0, 300, 200,0, 200, 300,0, 300,0,300];
+            const data = [0, 300, 200,0, 200, 300,0, 300,0,300];
+
+            shape = new p2.Heightfield({
+                heights: data,
+                elementWidth: 10
+            })
+        }
+        else if (obj.shape === 'polygon') {
             //console.log("POLY",body.fromPolygon(obj.points.map(p => [p.x, p.y]))  );
             shape = new p2.Convex({
                 vertices: obj.points.map(p => [p.x, p.y])
@@ -343,6 +363,12 @@ module.exports = function createPhysics(params) {
 //        console.log(t);
     });
 
+    model.clear = function () {
+        worldConstraints.length = 0;
+        this.objects.length = 0;
+        world.clear();
+        world.gravity = [params.gravity.x, params.gravity.y];
+    };
 
     return model;
 };

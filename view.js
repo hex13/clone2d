@@ -178,7 +178,7 @@ exports.view = {
     init({viewport, antialiasing = true}) {
         this.viewport = this.viewport || DEFAULT_VIEWPORT;
         //console.log("VV", this.viewport);
-        this.camera = this.camera || {x: 0, y: 0, rotation: 0};
+        this.camera = this.camera || {x: 0, y: 0, rotation: 0, scale: 1};
         this.color = ['red', 'green','blue', 'white'][~~(Math.random()*4)];
         this.antialiasing = antialiasing;
 
@@ -266,7 +266,7 @@ exports.view = {
                 }
                 const x = obj.x;
                 const y = obj.y;
-                const displayAs = obj.displayAs || 'image';
+                const displayAs = obj.displayAs || ('img' in obj? 'image' : 'shape');
                 const scale = obj.scale || 1;
                 //ctx.globalAlpha = typeof obj.opacity == 'number'? obj.opacity : 1;
                 ctx.globalAlpha = typeof obj.opacity == 'number'? obj.opacity : 1;
@@ -320,7 +320,7 @@ exports.view = {
                         const padding = 4;
                         ctx.fillStyle = 'rgba(10,80,120,0.4)';
                         //ctx.globalCompositeOperation = 'hue';
-                        ctx.fillRect(-obj.width/2-padding, -obj.height/2-padding, obj.width + 2 * padding, obj.height + 2 * padding);
+                        //ctx.fillRect(-obj.width/2-padding, -obj.height/2-padding, obj.width + 2 * padding, obj.height + 2 * padding);
                         ctx.restore();
 
                     } else if (displayAs === 'image') {
@@ -396,7 +396,7 @@ exports.view = {
 
 
 
-        
+
         this.ctx.drawImage(this.offscreenCanvas, 0, 0);
 
         // ctx.endPath();

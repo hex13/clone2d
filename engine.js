@@ -23,9 +23,36 @@ let lastFps = 0;
 const helpers = require('./helpers');
 const createKeyFrames = helpers.createKeyFrames;
 
+function createIntervalFunctions() {
+    var intervals = [];
+    var timeouts = [];
+    function setInterval(f, t) {
+        intervals.push(window.setInterval(f, t));
+    }
+    function setTimeout(f, t) {
+        timeouts.push(window.setTimeout(f, t));
+    }
+
+    function clear() {
+        intervals.forEach(interval => {
+            clearInterval(interval);
+        })
+        timeouts.forEach(timeout => {
+            clearTimeout(timeout);
+        });
+        intervals = [];
+        timeouts = [];
+    }
+    return {
+        setInterval, setTimeout, clear
+    }
+}
+
 
 function createEngine(params) {
     const engine = {};
+    const scenes = engine.scenes = Object.create(null);
+
     const types = Object.create(null);
     types.default = {
 
@@ -65,7 +92,7 @@ function createEngine(params) {
     const hud = createPhysics({types, mouse});
 
 
-    const models = [world, menu, hud, overlay];//!!!TODO automatic adding
+
 
 
     function createView(getObjects, model, methods) {
@@ -99,20 +126,77 @@ function createEngine(params) {
     //setInterval(() => {worldViewport.scale = 0.04*Math.cos(a+=0.1)+1}, 200);
 
     const camera = {x: 400, y: 200, rotation: 0, scale: 0.5};//TODO zero
-    const views = [
-        createView(() => world.objects.concat(overlay.objects), world, {
-            viewport: worldViewport,
-            camera,
-            canvas: canvas
+
+    scenes.main = {
+        view: createView(() => world.objects.concat(overlay.objects), world, {
+                    viewport: worldViewport,
+                    camera,
+                    canvas: canvas
         }),
-        // createView(() => menu.objects, menu, {
-        // }),
-        createView(() => ([{
-            shape: 'circle', r:100, fill:'red', displayAs: 'shape'
-        }]), hud, {
+        model: world,
+        params: createIntervalFunctions()
+    };
+
+    scenes.menu = {
+        next: scenes.main,
+        model: createPhysics(Object.assign({types, mouse, onHover, overlay}, params.physics)),
+        clear() {
+            overlay.clear();
+        },
+        view: createView(() => (scenes.menu.model.objects), hud, {
             viewport: worldViewport,
             canvas: overlayCanvas,
         }),
+    }
+    scenes.main.next = scenes.menu;
+    const models = [world, menu, hud, overlay, scenes.menu.model];//!!!TODO automatic adding
+
+    const orchestrator = {
+        hideScene(scene) {
+            const idx = activeViews.indexOf(scene.view);
+            if (idx != -1) {
+                activeViews.splice(idx, 1);
+            }
+            if (scene.clear) {
+                scene.clear();
+            }
+        },
+        playScene(scene) {
+            console.log("PLAY SCENE", scene)
+            if (scene.init) {
+                scene.init(scene.params);
+            }
+            this.showScene(scene);
+        },
+        showScene(scene) {
+            // call hideScene to ensure only one reference is stored
+            // even if showScene is called multiple times
+            this.hideScene(scene);
+            console.log("show scene", scene)
+            activeViews.push(scene.view);
+        },
+        endScene(scene) {
+            this.hideScene(scene);
+            if (scene.model) {
+                console.log("SCENE>MODEL", scene.model);
+                if (scene.model.clear) {
+                    console.log("SCENE>MODEL>CLEAR", scene.model.clear);
+                    scene.model.clear();
+                }
+            }
+            if (scene.params) {
+                scene.params.clear();
+            }
+            if (scene.next) {
+                this.playScene(scene.next);
+            }
+        }
+    };
+    const views = [
+        // createView(() => menu.objects, menu, {
+        // }),
+        scenes.main.view,
+        scenes.menu.view
         // createView(() => hud.objects, hud, {
         //     //viewport: worldViewport
         // }),
@@ -195,12 +279,16 @@ function createEngine(params) {
         mouse.down = true;
 
         const {x, y} = e2xy(e);
+        console.log("MOUSE", x, y, e)
         const engineEvent = {
             x,
             y,
             originalEvent: e
         };
-        views.forEach(v => v.emit('onMouseDown', engineEvent));
+        // TODO in every event we need this
+        views
+            .filter(v => activeViews.indexOf(v) != -1)
+            .forEach(v => v.emit('onMouseDown', engineEvent));
         //views.forEach(v => v.mouseDown && v.mouseDown(e));
     });
 
@@ -218,7 +306,7 @@ function createEngine(params) {
 
     // autochanging coordinates, paths etc.
     const activeViews = [
-        views[0],views[1]
+        scenes.menu.view
     ];
 
     function renderLoop() {
@@ -335,7 +423,7 @@ function createEngine(params) {
         worldView: views[0],
         modifiers: modifiers,
         activeViews
-    });
+    }, orchestrator);
 
 }
 
