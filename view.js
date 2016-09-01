@@ -1,33 +1,8 @@
 'use strict';
 
-function resolveRenderables(obj) {
-    const handle = {
-        color: 'rgba(255,255,0,0.5)',
-        width: 20,
-        height: 20,
-    };
-    if (obj.resolveRenderables)
-        return obj.resolveRenderables();
-
-    if (obj.shape == 'rope') {
-        return {
-            displayAs: 'path',
-            color: obj.color,
-            fill: obj.fill,
-            width: obj.width,
-            x: 0,
-            y: 0,//this.y,
-            points: obj.points,
-        }
-    }
-    return [
-        obj,
-    ];
-}
-
-function resolveText(obj) {
-    return obj.getText? obj.getText() : obj.text;
-}
+const resolvers = require('./resolvers');
+const resolveRenderables = resolvers.resolveRenderables;
+const resolveText = resolvers.resolveText;
 
 const DEFAULT_VIEWPORT = {
     x: 400, y: 300, width: 800, height: 600, scale: 1
