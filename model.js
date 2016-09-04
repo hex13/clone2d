@@ -25,7 +25,7 @@ function resolveParams(data) {
 }
 
 const World = {
-    t0: new Date,
+    t0: startTime,
     age:0,
     state: 'running',
 
@@ -121,8 +121,6 @@ const World = {
         const proto = resolvePrototype(data);
 
         const obj = Object.create(proto);
-        obj.isDestroyer = false;
-        obj.isImmortal = true;
 
 
         let aborted;
