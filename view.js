@@ -81,14 +81,14 @@ exports.view = {
         }
     },
     render(outCtx) {
-
+        return;
+        //if (Math.random()<0.01) console.log("ILOSC", this.model.objects.length)
         const ctx = this.offscreenCtx;
         const viewport = this.viewport || {x: 400, y: 300, rotation: 0, width: 800, height: 600, scale: 1};
         const camera = this.camera;
 
         //const viewport = this.viewport || {x: 0, y: 0, rotation: 0};
         ctx.save();
-
 
 //        ctx.beginPath()
 
@@ -137,6 +137,7 @@ exports.view = {
 
         for (let i = 0; i < len; i++) {
             var unresolvedObj = objects[i];
+
             unresolvedObj._ctx = ctx;
             const isHovered = this.model.isHovered? this.model.isHovered(unresolvedObj) : false;
             let renderables = resolveRenderables(unresolvedObj);
