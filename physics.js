@@ -243,7 +243,7 @@ module.exports = function createPhysics(params) {
                         height: width,
                         mass: 0.1, //0.09,
                         color:  'rgba(170,110,80,0.1)',//'rgba(100,100,100, 0.1)',
-                        fill: 'rgba(170,110,80,0.3)',
+                        fill: 'rgb(170,110,80)',
                         x: obj.x + x,
                         y: obj.y + y,
                         constraints: {}
@@ -351,12 +351,12 @@ module.exports = function createPhysics(params) {
             if (a.isDestroyer && !b.ignore /*&& !b.constraints */ && !b.isImmortal) {
                 modifiers.modExplode.patch(b, 2000, {}, overlay) //o.d
                 b.onExplosion && b.onExplosion();
-                //b.dead = true;
+                b.dead = true;
             }
             if (b.isDestroyer && !a.ignore /*&& !a.constraints */&& !a.isImmortal) {
                 modifiers.modExplode.patch(a, 2000, {}, overlay) //o.d
                 a.onExplosion && a.onExplosion();
-                //a.dead = true;
+                a.dead = true;
             }
 
         }
