@@ -2,12 +2,13 @@ const Path = require('path');
 
 const _ = require('lodash');
 
+const webglView = require('./webgl').view;
 const view = require('./view').view;
 const createPhysics = require('./physics');
 const createModel = require('./model');
 const modifiers = require('./modifiers')
 
-
+const container = document.getElementById('game');
 const canvas = document.getElementById('world');
 const overlayCanvas = document.getElementById('overlay');
 
@@ -99,11 +100,20 @@ function createEngine(params) {
         const inst = Object.create(view);
         Object.assign(inst, methods);
         inst.getObjects = getObjects;
-
-        inst.init({antialiasing: params.antialiasing});
+        inst.init({antialiasing: params.antialiasing, el: container});
         inst.model = model;
         return inst;
     }
+
+    function createWebglView(getObjects, model, methods) {
+        const inst = Object.create(webglView);
+        Object.assign(inst, methods);
+        inst.getObjects = getObjects;
+        inst.init({antialiasing: params.antialiasing, el: container});
+        inst.model = model;
+        return inst;
+    }
+
     const worldViewport = menu.createObject({
         displayAs: 'rect',
         width: 800,
@@ -128,11 +138,22 @@ function createEngine(params) {
     const camera = {x: 400, y: 200, rotation: 0, scale: 0.5};//TODO zero
 
     scenes.main = {
-        view: createView(() => world.objects.concat(overlay.objects), world, {
-                    viewport: worldViewport,
-                    camera,
-                    canvas: canvas
-        }),
+        views: [
+            createWebglView(() => overlay.objects.concat(world.objects), world, {
+                viewport: worldViewport,
+                camera,
+                canvas: canvas
+            }),
+            createView(() => ([]), world, {
+                viewport: worldViewport,
+                camera,
+                canvas: canvas
+            })
+
+        ],
+        get view() {
+            return this.views[1];
+        },
         model: world,
         params: createIntervalFunctions()
     };
@@ -153,6 +174,7 @@ function createEngine(params) {
 
     const orchestrator = {
         hideScene(scene) {
+            scene.view.hide && scene.view.hide();
             const idx = activeViews.indexOf(scene.view);
             if (idx != -1) {
                 activeViews.splice(idx, 1);
@@ -172,8 +194,12 @@ function createEngine(params) {
             // call hideScene to ensure only one reference is stored
             // even if showScene is called multiple times
             this.hideScene(scene);
-            console.log("show scene", scene)
-            activeViews.push(scene.view);
+            console.log("show scene", scene);
+            if (scene.views) {
+                activeViews.push.apply(activeViews, scene.views);
+            } else {
+                activeViews.push(scene.view);
+            }
         },
         endScene(scene) {
             this.hideScene(scene);
@@ -327,6 +353,7 @@ function createEngine(params) {
         ctx.clearRect(0,0,800,600);
         overlayCanvas.getContext('2d').clearRect(0,0,800,600);
         activeViews.forEach(v=> v.render(ctx));
+        //activeViews[0].render();
 
 
         //views.forEach(v => v.render(ctx))
@@ -371,6 +398,7 @@ function createEngine(params) {
     createType('text', {
         displayAs: 'text',
         onUpdate() {
+            return;
             if (this._ctx) {
                 this._ctx.save();
                 if (this.fontSize) {
